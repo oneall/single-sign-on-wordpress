@@ -9,6 +9,10 @@ Author URI: http://www.oneall.com/
 License: GPL2
 */
 
+define ('OA_SINGLE_SIGN_ON_PLUGIN_URL', plugins_url () . '/' . basename (dirname (__FILE__)));
+define ('OA_SINGLE_SIGN_ON_BASE_PATH', dirname (plugin_basename (__FILE__)));
+define ('OA_SINGLE_SIGN_ON_VERSION', '1.0');
+
 
 /**
  * Check technical requirements before activating the plugin
@@ -28,8 +32,10 @@ register_activation_hook (__FILE__, 'oa_single_sign_on_activate');
 /**
  * Include required files
  */
+require_once(dirname (__FILE__) . '/includes/toolbox.php');
+require_once(dirname (__FILE__) . '/includes/communication.php');
 require_once(dirname (__FILE__) . '/includes/plugin.php');
-
+require_once(dirname (__FILE__) . '/includes/admin.php');
 
 /**
  * Initialise

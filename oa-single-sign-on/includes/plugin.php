@@ -1,7 +1,8 @@
 <?php
 
+
 // Sends a request to the OneAll API
-function oa_single_sign_on_curl_request ($operation, $args = array ())
+function oa_single_sign_on_curl_request1 ($operation, $args = array ())
 {
 	// Read Social Login settings
 	$settings = get_option ('oa_social_login_settings');
@@ -77,6 +78,13 @@ function oa_single_sign_on_curl_request ($operation, $args = array ())
 // Initialize
 function oa_single_sign_on_init ()
 {
+	//Add language file.
+	if (function_exists ('load_plugin_textdomain'))
+	{
+		load_plugin_textdomain (' oa_single_sign_on', false, OA_SINGLE_SIGN_ON_BASE_PATH . '/languages/');
+	}
+	
+	
 	if (session_id () == "")
 	{
 		session_start ();
