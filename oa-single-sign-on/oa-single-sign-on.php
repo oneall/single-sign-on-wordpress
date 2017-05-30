@@ -2,7 +2,7 @@
 /*
 Plugin Name: Single Sign-On
 Plugin URI: http://www.oneall.com/
-Description: Automatically sign in users as they browse between multiple and independent WordPress blogs in your ecosystem. 
+Description: Automatically sign in users as they browse between multiple and independent WordPress blogs in your ecosystem.
 Version: 1.0
 Author: Claude Schlesser
 Author URI: http://www.oneall.com/
@@ -13,20 +13,26 @@ define ('OA_SINGLE_SIGN_ON_PLUGIN_URL', plugins_url () . '/' . basename (dirname
 define ('OA_SINGLE_SIGN_ON_BASE_PATH', dirname (plugin_basename (__FILE__)));
 define ('OA_SINGLE_SIGN_ON_VERSION', '1.0');
 
-
 /**
- * Check technical requirements before activating the plugin
- */
-function oa_single_sign_on_activate ()
+ * Adds a setup link in the plugin list
+ **/
+function oa_single_sign_on_add_setup_link ($links, $file)
 {
-	if (!function_exists ('oa_social_login_activate'))
-	{
-		deactivate_plugins (basename (dirname (__FILE__)) . '/' . basename (__FILE__));
-		_ ('This plugin requires Social Login to be installed first.', 'oa_single_sign_on');
-		exit;
-	}
+    static $oa_single_sign_on_plugin = null;
+
+    if (is_null ($oa_single_sign_on_plugin))
+    {
+        $oa_single_sign_on_plugin = plugin_basename (__FILE__);
+    }
+
+    if ($file == $oa_single_sign_on_plugin)
+    {
+        $settings_link = '<a href="admin.php?page=oa_single_sign_on_settings">' . __ ('Setup', 'oa_single_sign_on') . '</a>';
+        array_unshift ($links, $settings_link);
+    }
+    return $links;
 }
-register_activation_hook (__FILE__, 'oa_single_sign_on_activate');
+add_filter ('plugin_action_links', 'oa_single_sign_on_add_setup_link', 10, 2);
 
 
 /**

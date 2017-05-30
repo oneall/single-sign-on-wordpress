@@ -1,25 +1,39 @@
 <?php
 
 /**
- * Add administration area menu and links
+ * Adds administration area menu and links
  **/
 function oa_single_sign_on_admin_menu ()
 {
 	// Setup
 	$page = add_menu_page ('OneAll Single Sign On ' . __ ('Settings', 'oa_single_sign_on'), 'Single Sign On', 'manage_options', 'oa_single_sign_on_settings', 'oa_single_sign_on_admin_settings_menu', 'dashicons-admin-network');
 	add_action ('admin_print_styles-' . $page, 'oa_single_sign_on_admin_css');
-	
+
 	// Fix Setup title
 	global $submenu;
 	if (is_array ($submenu) and isset ($submenu ['oa_single_sign_on_settings']))
 	{
 		$submenu ['oa_single_sign_on_setup'] [0] [0] = __ ('Settings', 'oa_single_sign_on');
 	}
-	
+
 	add_action ('admin_init', 'oa_single_sign_on_admin_settings');
 	add_action ('admin_enqueue_scripts', 'oa_single_sign_on_admin_js');
 }
 add_action ('admin_menu', 'oa_single_sign_on_admin_menu');
+
+/**
+ * Adds an activation message to be displayed once.
+ */
+function oa_single_sign_on_admin_message ()
+{
+    if (get_option ('oa_single_sign_on_activation_message') !== '1')
+    {
+        echo '<div class="updated"><p><strong>' . __ ('Thank you for using Single Sign-On!', 'oa_single_sign_on') . '</strong> ' . sprintf (__ ('Please complete the <strong><a href="%s">Single Sign On Setup</a></strong> to enable the plugin.', 'oa_social_login'), 'admin.php?page=oa_single_sign_on_settings') . '</p></div>';
+        update_option ('oa_single_sign_on_activation_message', '1');
+    }
+}
+add_action ('admin_notices', 'oa_single_sign_on_admin_message');
+
 
 /**
  * Autodetect API Connection Handler
@@ -28,7 +42,7 @@ function oa_single_sign_on_admin_autodetect_api_connection_handler ()
 {
 	// Check AJAX Nonce
 	check_ajax_referer ('oa_single_sign_on_ajax_nonce');
-	
+
 	// Check if CURL is available
 	if (oa_single_sign_on_check_curl_available ())
 	{
@@ -71,7 +85,7 @@ function oa_single_sign_on_admin_autodetect_api_connection_handler ()
 			die ();
 		}
 	}
-	
+
 	// No working handler found
 	echo 'error_autodetect_api_no_handler';
 	die ();
@@ -85,17 +99,17 @@ add_action ('wp_ajax_oa_single_sign_on_admin_autodetect_api_connection_handler',
 function oa_single_sign_on_admin_check_api_settings ()
 {
 	check_ajax_referer ('oa_single_sign_on_ajax_nonce');
-	
+
 	// Check if all fields have been filled out
 	if (empty ($_POST ['api_subdomain']) or empty ($_POST ['api_key']) or empty ($_POST ['api_secret']))
 	{
 		die ('error_not_all_fields_filled_out');
 	}
-	
+
 	// Check the handler
 	$api_connection_handler = ((!empty ($_POST ['api_connection_handler']) and $_POST ['api_connection_handler'] == 'fsockopen') ? 'fsockopen' : 'curl');
 	$api_connection_use_https = ((!isset ($_POST ['api_connection_use_https']) or $_POST ['api_connection_use_https'] == '1') ? true : false);
-	
+
 	// FSOCKOPEN
 	if ($api_connection_handler == 'fsockopen')
 	{
@@ -112,32 +126,32 @@ function oa_single_sign_on_admin_check_api_settings ()
 			die ('error_selected_handler_faulty');
 		}
 	}
-	
+
 	$api_subdomain = trim (strtolower ($_POST ['api_subdomain']));
 	$api_key = trim ($_POST ['api_key']);
 	$api_secret = trim ($_POST ['api_secret']);
-	
+
 	// Full domain entered
 	if (preg_match ("/([a-z0-9\-]+)\.api\.oneall\.com/i", $api_subdomain, $matches))
 	{
 		$api_subdomain = $matches [1];
 	}
-	
+
 	// Check subdomain format
 	if (!preg_match ("/^[a-z0-9\-]+$/i", $api_subdomain))
 	{
 		die ('error_subdomain_wrong_syntax');
 	}
-	
+
 	// Domain
 	$api_domain = $api_subdomain . '.api.oneall.com';
-	
+
 	// Connection to
 	$api_resource_url = ($api_connection_use_https ? 'https' : 'http') . '://' . $api_domain . '/tools/ping.json';
-	
+
 	// Get connection details
 	$result = oa_single_sign_on_do_api_request ($api_connection_handler, $api_resource_url, array('api_key' => $api_key, 'api_secret' => $api_secret), 15);
-	
+
 	// Parse result
 	if (is_object ($result) and property_exists ($result, 'http_code') and property_exists ($result, 'http_data'))
 	{
@@ -146,17 +160,17 @@ function oa_single_sign_on_admin_check_api_settings ()
 			// Success
 			case 200 :
 				die ('success');
-			
+
 			// Authentication Error
 			case 401 :
 				die ('error_authentication_credentials_wrong');
-			
+
 			// Wrong Subdomain
 			case 404 :
 				die ('error_subdomain_wrong');
 		}
 	}
-	
+
 	die ('error_communication');
 }
 add_action ('wp_ajax_oa_single_sign_on_admin_check_api_settings', 'oa_single_sign_on_admin_check_api_settings');
@@ -172,14 +186,14 @@ function oa_single_sign_on_admin_js ($hook)
 		{
 			wp_register_script ('oa_single_sign_on_admin_js', OA_SINGLE_SIGN_ON_PLUGIN_URL . "/assets/js/admin.js");
 		}
-		
+
 		// Nonce for Ajax Calls
 		$oa_single_sign_on_ajax_nonce = wp_create_nonce ('oa_single_sign_on_ajax_nonce');
-		
+
 		// Add Javascript
 		wp_enqueue_script ('oa_single_sign_on_admin_js');
 		wp_enqueue_script ('jquery');
-		
+
 		// Add API Messages
 		wp_localize_script ('oa_single_sign_on_admin_js', 'objectL10n', array(
 			'oa_single_sign_on_ajax_nonce' => $oa_single_sign_on_ajax_nonce,
@@ -197,7 +211,7 @@ function oa_single_sign_on_admin_js ($hook)
 			'oa_single_sign_on_js_202a' => __ ('Detected FSOCKOPEN on Port 443 - do not forget to save your changes!', 'oa_single_sign_on'),
 			'oa_single_sign_on_js_202b' => __ ('Detected FSOCKOPEN on Port 80 - do not forget to save your changes!', 'oa_single_sign_on'),
 			'oa_single_sign_on_js_202c' => __ ('FSOCKOPEN is available but both ports (80, 443) are blocked for outbound requests', 'oa_single_sign_on'),
-			'oa_single_sign_on_js_211' => sprintf (__ ('Autodetection Error - our <a href="%s" target="_blank">documentation</a> helps you fix this issue.', 'oa_single_sign_on'), 'http://docs.oneall.com/plugins/guide/social-login-wordpress/#help') 
+			'oa_single_sign_on_js_211' => sprintf (__ ('Autodetection Error - our <a href="%s" target="_blank">documentation</a> helps you fix this issue.', 'oa_single_sign_on'), 'http://docs.oneall.com/plugins/guide/social-login-wordpress/#help')
 		));
 	}
 }
@@ -211,7 +225,7 @@ function oa_single_sign_on_admin_css ($hook = '')
 	{
 		wp_register_style ('oa_single_sign_on_admin_css', OA_SINGLE_SIGN_ON_PLUGIN_URL . "/assets/css/admin.css");
 	}
-	
+
 	if (did_action ('wp_print_styles'))
 	{
 		wp_print_styles ('oa_single_sign_on_admin_css');
@@ -237,28 +251,28 @@ function oa_single_sign_on_admin_settings_validate ($settings)
 {
 	// Settings page?
 	$page = (!empty ($_POST ['page']) ? strtolower ($_POST ['page']) : '');
-	
+
 	// Store the sanitzed settings
 	$sanitzed_settings = get_option ('oa_single_sign_on_settings');
-	
+
 	// Check format
 	if (!is_array ($sanitzed_settings))
 	{
 		$sanitzed_settings = array();
 	}
-	
+
 	// //////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Settings
 	// //////////////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	// Fields
 	$fields = array ();
 	$fields [] = 'api_connection_handler';
 	$fields [] = 'api_connection_use_https';
 	$fields [] = 'api_subdomain';
 	$fields [] = 'api_key';
-	$fields [] = 'api_secret'; 
-	
+	$fields [] = 'api_secret';
+
 	// Extract fields
 	foreach ($fields as $field)
 	{
@@ -268,10 +282,10 @@ function oa_single_sign_on_admin_settings_validate ($settings)
 			$sanitzed_settings [$field] = trim ($settings [$field]);
 		}
 	}
-	
+
 	// Sanitize API Use HTTPS
 	$sanitzed_settings ['api_connection_use_https'] = (empty ($sanitzed_settings ['api_connection_use_https']) ? 0 : 1);
-	
+
 	// Sanitize API Connection handler
 	if (isset ($sanitzed_settings ['api_connection_handler']) and in_array (strtolower ($sanitzed_settings ['api_connection_handler']), array('curl', 'fsockopen')))
 	{
@@ -281,22 +295,22 @@ function oa_single_sign_on_admin_settings_validate ($settings)
 	{
 		$sanitzed_settings ['api_connection_handler'] = 'curl';
 	}
-	
+
 	// Sanitize API Subdomain
 	if (isset ($sanitzed_settings ['api_subdomain']))
 	{
 		// Subdomain is always in lowercase
 		$api_subdomain = strtolower ($sanitzed_settings ['api_subdomain']);
-		
+
 		// Full domain entered
 		if (preg_match ("/([a-z0-9\-]+)\.api\.oneall\.com/i", $api_subdomain, $matches))
 		{
 			$api_subdomain = $matches [1];
 		}
-		
+
 		$sanitzed_settings ['api_subdomain'] = $api_subdomain;
 	}
-	
+
 	// Done
 	return $sanitzed_settings;
 }
@@ -357,7 +371,7 @@ function oa_single_sign_on_admin_settings_menu ()
 		</div>
 						<?php
 	}
-	
+
 	if (!empty ($_REQUEST ['settings-updated']) and strtolower ($_REQUEST ['settings-updated']) == 'true')
 	{
 		?>
@@ -479,7 +493,7 @@ function oa_single_sign_on_admin_settings_menu ()
 						<div id="oa_single_sign_on_api_test_result"></div>
 					</td>
 				</tr>
-			</table>		
+			</table>
 
 			<p class="submit">
 				<input type="hidden" name="page" value="setup" /> <input type="submit" class="button-primary"
