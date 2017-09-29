@@ -1,0 +1,84 @@
+#oa_single_sign_on_overlay {
+	background-color: transparent;
+	background-image: url("../img/overlay.png");
+	background-position: 0 0;
+	background-repeat: repeat;
+	height: 100%;
+	left: 0;
+	overflow: auto;
+	position: fixed;
+	text-align: center;
+	top: 0;
+	width: 100%;
+	z-index: 999995;
+}
+
+#oa_single_sign_on_modal {
+	left: 50%;
+	margin-left: -200px;
+	position: fixed;
+	text-align: left;
+	top: 25%;
+	width: 450px;
+	z-index: 999996;
+}
+
+.oa_single_sign_on_modal_outer {
+	border-radius: 4px;
+	overflow: auto;
+	background-color: #eee;
+	z-index: 999998;
+	box-shadow: 10px 10px 12px -11px rgba(0, 0, 0, 0.75);
+}
+
+.oa_single_sign_on_modal_inner {
+	overflow: auto;
+	background: #fff;
+	margin: 5px;
+	padding: 0;
+	z-index: 999997;
+}
+
+.oa_single_sign_on_modal_buttons {
+	text-align: center;
+	margin-top: 10px;
+}
+
+.oa_single_sign_on_modal_button {
+	font-size: 13px;
+	padding: 5px 20px;
+	margin:0 5px;
+	border:1px solid #ddd;
+	background-color: #eee;
+	border-radius: 3px;	
+}
+
+.oa_single_sign_on_modal_button:hover{
+    background-color: #ddd;
+    border-color: #ccc;
+}
+
+.oa_single_sign_on_modal_body {
+	padding: 10px 20px;
+}
+
+.oa_single_sign_on_modal_title {
+	color: #222;
+	background-color: #eee;
+	padding: 5px 0 8px;
+	border-bottom: 1px solid #ccc;
+	font-size: 16px;
+	text-align: center;
+}
+
+.oa_single_sign_on_modal_notice {
+    color: #222;
+    font-size: 14px;
+    font-weight: bold;
+    margin: 5px 0;
+    line-height:24px;
+}
+
+.oa_single_sign_on_login{
+    color: #777;
+}
