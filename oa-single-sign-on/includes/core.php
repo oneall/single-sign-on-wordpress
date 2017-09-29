@@ -127,16 +127,29 @@ function oa_single_sign_on_after_profile_update ($userid)
 	// Is the plugin configured?
 	if (oa_single_sign_on_is_configured())
 	{
-		if (isset ($_POST) && ! empty ($_POST['pass1']) && ! empty ($_POST['pass2']))
-		{
-			if ($_POST['pass1'] == $_POST['pass2'])
-			{
-				// Read current user.
-				$user = get_user_by ('ID', $userid);
+		// Read current user.
+		$user = get_user_by ('ID', $userid);
 
-				// Update password.
-				$result = oa_single_sign_on_update_customer_cloud_password ($user, $_POST['pass1']);
+		// Check user.
+		if (is_object ($user) && $user instanceof WP_User && ! empty ($user->ID))
+		{
+			// New Password.
+			$new_password = null;
+
+			// Profile Updated
+			if (isset ($_POST) && is_array ($_POST) && ! empty ($_POST['submit']))
+			{
+				if (! empty ($_POST['pass1']) && ! empty ($_POST['pass2']))
+				{
+					if ($_POST['pass1'] == $_POST['pass2'])
+					{
+						$new_password = $_POST['pass1'];
+					}
+				}
 			}
+
+			// Update.
+			$result = oa_single_sign_on_update_user_in_cloud ($user, $new_password);
 		}
 	}
 }

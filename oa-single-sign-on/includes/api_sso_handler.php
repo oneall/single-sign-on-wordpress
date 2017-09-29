@@ -3,7 +3,7 @@
 /**
  * Update the given user's password in his cloud storage.
  */
-function oa_single_sign_on_update_customer_cloud_password ($user, $password)
+function oa_single_sign_on_update_user_in_cloud ($user, $password = null)
 {
 	// Result Container.
 	$status = new stdClass ();
@@ -24,6 +24,78 @@ function oa_single_sign_on_update_customer_cloud_password ($user, $password)
 			// Yes, we have a token
 			if ($tokens->have_been_retrieved)
 			{
+				// Build Data
+				$request = array (
+					'update_mode' => 'replace',
+					'user' => array ()
+				);
+
+				// Password updated
+				if ( ! empty ($password))
+				{
+					$request['user']['password'] = oa_single_sign_on_hash_string ($password);
+				}
+
+				// Identity
+				$request['user']['identity'] = array (
+					'preferredUsername' => $user->user_login,
+					'displayName' => ( ! empty ($user->display_name) ? $user->display_name : $user->user_login)
+				);
+
+				// Names.
+				if ( ! empty ( ($user->first_name) || ! empty ($user->last_name)))
+				{
+					$request['user']['identity']['name'] = array ();
+
+					// First Name.
+					if ( ! empty ($user->first_name))
+					{
+						$request['user']['identity']['name']['givenName'] = $user->first_name;
+					}
+
+					// Last Name.
+					if ( ! empty ($user->last_name))
+					{
+						$request['user']['identity']['name']['familyName'] = $user->last_name;
+					}
+				}
+
+				// About Me.
+				if ( ! empty ($user->description))
+				{
+					$request['user']['identity']['aboutMe'] = $user->description;
+				}
+
+				// User Avatar.
+				$user_avatar = get_avatar_data ($user->ID);
+				if ( ! empty ($user_avatar['url']))
+				{
+					$request['user']['identity']['thumbnailUrl'] = $user_avatar['url'];
+				}
+
+				// User Roles.
+				if (isset ($user->roles) && is_array($user->roles) && count ($user->roles) > 0)
+				{
+					$request['user']['identity']['roles'] = array ();
+					foreach ($user->roles AS $role)
+					{
+						$request['user']['identity']['roles'][] = array (
+							'value' => $role
+						);
+					}
+				}
+
+				// User Email.
+				if ( ! empty ($user->user_email))
+				{
+					$request['user']['identity']['emails'] = array (
+						array (
+							'value' => $user->user_email,
+							'is_verified' => true
+						)
+					);
+				}
+
 				// API Endpoint: http://docs.oneall.com/api/resources/storage/users/update-user/
 				$api_resource_url = $ext_settings ['api_url'] . '/storage/users/' . $tokens->user_token . '.json';
 
@@ -32,11 +104,7 @@ function oa_single_sign_on_update_customer_cloud_password ($user, $password)
 					'api_key' => $ext_settings ['api_key'],
 					'api_secret' => $ext_settings ['api_secret'],
 					'api_data' => @json_encode (array(
-						'request' => array(
-							'user' => array(
-								'password' => oa_single_sign_on_hash_string ($password)
-							)
-						)
+						'request' => $request
 					))
 				);
 
@@ -51,7 +119,7 @@ function oa_single_sign_on_update_customer_cloud_password ($user, $password)
 					$status->is_successfull = true;
 
 					// Add log.
-					oa_single_sign_on_add_log ('[UPDATE CLOUD PASSWORD] Password for user [' . $user->ID . ', ' . $tokens->user_token . '] updated in cloud storage');
+					oa_single_sign_on_add_log ('[UPDATE CLOUD USER] Profile for user [' . $user->ID . ', ' . $tokens->user_token . '] updated in cloud storage');
 				}
 				else
 				{
