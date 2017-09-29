@@ -124,30 +124,29 @@ jQuery(document).ready(function($) {
 		message_container.removeClass('success_message error_message').addClass('working_message');
 		message_container.html(objectL10n.oa_single_sign_on_js_1);
 		
-		jQuery.post(ajaxurl,data, function(response) {		
+		jQuery.post(ajaxurl,data, function(response) {	
+		    is_success = false;
+		    
 			if (response == 'error_selected_handler_faulty'){
-				is_success = false;
 				message_string = objectL10n.oa_single_sign_on_js_116;
 			}
 			else if (response == 'error_not_all_fields_filled_out'){
-				is_success = false;
 				message_string = objectL10n.oa_single_sign_on_js_111;
 			}
 			else if (response == 'error_subdomain_wrong'){
-				is_success = false;
 				message_string = objectL10n.oa_single_sign_on_js_112;
 			}
 			else if (response == 'error_subdomain_wrong_syntax'){
-				is_success = false;
 				message_string = objectL10n.oa_single_sign_on_js_113;	
 			}
 			else if (response == 'error_communication'){
-				is_success = false;
 				message_string = objectL10n.oa_single_sign_on_js_114;					
 			}
 			else if (response == 'error_authentication_credentials_wrong'){
-				is_success = false;
 				message_string = objectL10n.oa_single_sign_on_js_115;		
+			}
+			else if (response == 'error_plan_has_no_single_signon') {
+			    message_string = objectL10n.oa_single_sign_on_js_301;
 			}
 			else {
 				is_success = true;

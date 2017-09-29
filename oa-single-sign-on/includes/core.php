@@ -14,7 +14,7 @@ function oa_single_sign_on_init ()
 	// Check if we have a single sign-on login.
 	$status = oa_single_sign_on_check_for_sso_login ();
 
-	// Nothing has been done
+	// Check what needs to be done.
 	switch (strtolower ($status->action))
 	{
 		// //////////////////////////////////////////////////////////////////////////
@@ -22,7 +22,7 @@ function oa_single_sign_on_init ()
 		// //////////////////////////////////////////////////////////////////////////
 		case 'new_user_no_login_autocreate_off' :
 
-			// Add log
+			// Add log.
 			oa_single_sign_on_add_log ('[INIT] @'.$status->action.' - New user detected but account creation is disabled');
 
 			// This value prevents SSO from re-trying to login the user.
@@ -34,13 +34,16 @@ function oa_single_sign_on_init ()
 		// User found and logged in
 		// //////////////////////////////////////////////////////////////////////////
 
-		// Logged in using the user_token
+		// Created a new user.
+		case 'new_user_created_login':
+
+		// Logged in using the user_token.
 		case 'existing_user_login_user_token' :
 
-		// Logged in using a verified email address
+		// Logged in using a verified email address.
 		case 'existing_user_login_email_verified' :
 
-			// Logged in using an un-verified email address
+			// Logged in using an un-verified email address.
 		case 'existing_user_login_email_unverified' :
 
 			// Add Log
@@ -62,13 +65,13 @@ function oa_single_sign_on_init ()
 		// User found, but we cannot log him in
 		// //////////////////////////////////////////////////////////////////////////
 
-		// User found, but autolink disabled
+		// User found, but autolink disabled.
 		case 'existing_user_no_login_autolink_off' :
 
-		// User found, but autolink not allowed
+		// User found, but autolink not allowed.
 		case 'existing_user_no_login_autolink_not_allowed':
 
-		// Customer found, but autolink disabled for unverified emails
+		// Customer found, but autolink disabled for unverified emails.
 		case 'existing_user_no_login_autolink_off_unverified_emails' :
 
 			// Add Log

@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name: Single Sign-On
+Plugin Name: Single Sign-On SSO
 Plugin URI: http://www.oneall.com/
 Description: Automatically sign in users as they browse between multiple and independent WordPress blogs in your ecosystem.
 Version: 1.0
@@ -13,24 +13,39 @@ define ('OA_SINGLE_SIGN_ON_PLUGIN_URL', plugins_url () . '/' . basename (dirname
 define ('OA_SINGLE_SIGN_ON_BASE_PATH', dirname (plugin_basename (__FILE__)));
 define ('OA_SINGLE_SIGN_ON_VERSION', '1.0');
 
+
 /**
- * Adds a setup link in the plugin list
+ * Check technical requirements before activating the plugin (Wordpress 3.0 or newer required)
+ */
+function oa_single_sign_on_activate ()
+{
+	if (!function_exists ('register_post_status'))
+	{
+		deactivate_plugins (basename (dirname (__FILE__)) . '/' . basename (__FILE__));
+		echo sprintf (__ ('This plugin requires WordPress %s or newer. Please update your WordPress installation to activate this plugin.', 'oa_single_sign_on'), '3.0');
+		exit;
+	}
+}
+register_activation_hook (__FILE__, 'oa_single_sign_on_activate');
+
+
+/**
+ * Add Setup Link
  **/
 function oa_single_sign_on_add_setup_link ($links, $file)
 {
-    static $oa_single_sign_on_plugin = null;
+	static $oa_single_sign_on_plugin = null;
 
-    if (is_null ($oa_single_sign_on_plugin))
-    {
-        $oa_single_sign_on_plugin = plugin_basename (__FILE__);
-    }
+	if (is_null ($oa_single_sign_on_plugin))
+	{
+		$oa_single_sign_on_plugin = plugin_basename (__FILE__);
+	}
 
-    if ($file == $oa_single_sign_on_plugin)
-    {
-        $settings_link = '<a href="admin.php?page=oa_single_sign_on_settings">' . __ ('Setup', 'oa_single_sign_on') . '</a>';
-        array_unshift ($links, $settings_link);
-    }
-    return $links;
+	if ($file == $oa_single_sign_on_plugin)
+	{
+		$links[] = '<a href="admin.php?page=oa_single_sign_on_settings">' . __ ('Open Settings', 'oa_single_sign_on') . '</a>';
+	}
+	return $links;
 }
 add_filter ('plugin_action_links', 'oa_single_sign_on_add_setup_link', 10, 2);
 

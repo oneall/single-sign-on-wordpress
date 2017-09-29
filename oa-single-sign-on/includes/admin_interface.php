@@ -147,8 +147,8 @@ function oa_single_sign_on_admin_check_api_settings ()
 	// Domain
 	$api_domain = $api_subdomain . '.api.oneall.com';
 
-	// Connection to
-	$api_resource_url = ($api_connection_use_https ? 'https' : 'http') . '://' . $api_domain . '/tools/ping.json';
+	// API Endpoint
+	$api_resource_url = ($api_connection_use_https ? 'https' : 'http') . '://' . $api_domain . '/site.json';
 
 	// API Options.
 	$api_options = array(
@@ -166,15 +166,39 @@ function oa_single_sign_on_admin_check_api_settings ()
 		{
 			// Success
 			case 200 :
-				die ('success');
+
+				// Decode result
+				$decoded_result = @json_decode ($result->http_data);
+
+				// Check result
+				if (is_object ($decoded_result) && isset ($decoded_result->response->result->data->site))
+				{
+					// Site Details
+					$site = $decoded_result->response->result->data->site;
+
+					// Check if our plans has the cloud storage
+					if (empty ($site->subscription_plan->features->has_single_signon))
+					{
+						die ('error_plan_has_no_single_signon');
+					}
+					// Success
+					else
+					{
+						die ('success');
+					}
+				}
+			break;
+
 
 			// Authentication Error
 			case 401 :
 				die ('error_authentication_credentials_wrong');
+			break;
 
 			// Wrong Subdomain
 			case 404 :
 				die ('error_subdomain_wrong');
+			break;
 		}
 	}
 
@@ -210,15 +234,16 @@ function oa_single_sign_on_admin_js ($hook)
 			'oa_single_sign_on_js_112' => __ ('The subdomain does not exist. Have you filled it out correctly?', 'oa_single_sign_on'),
 			'oa_single_sign_on_js_113' => __ ('The subdomain has a wrong syntax!', 'oa_single_sign_on'),
 			'oa_single_sign_on_js_114' => __ ('Could not contact API. Are outbound requests on port 443 allowed?', 'oa_single_sign_on'),
-			'oa_single_sign_on_js_115' => __ ('The API subdomain is correct, but one or both keys are invalid', 'oa_single_sign_on'),
-			'oa_single_sign_on_js_116' => __ ('Connection handler does not work, try using the Autodetection', 'oa_single_sign_on'),
+			'oa_single_sign_on_js_115' => __ ('The API subdomain is correct, but one or both keys are invalid.', 'oa_single_sign_on'),
+			'oa_single_sign_on_js_116' => __ ('Connection handler does not work, try using the Autodetection.', 'oa_single_sign_on'),
 			'oa_single_sign_on_js_201a' => __ ('Detected CURL on Port 443 - do not forget to save your changes!', 'oa_single_sign_on'),
 			'oa_single_sign_on_js_201b' => __ ('Detected CURL on Port 80 - do not forget to save your changes!', 'oa_single_sign_on'),
-			'oa_single_sign_on_js_201c' => __ ('CURL is available but both ports (80, 443) are blocked for outbound requests', 'oa_single_sign_on'),
+			'oa_single_sign_on_js_201c' => __ ('CURL is available but both ports (80, 443) are blocked for outbound requests.', 'oa_single_sign_on'),
 			'oa_single_sign_on_js_202a' => __ ('Detected FSOCKOPEN on Port 443 - do not forget to save your changes!', 'oa_single_sign_on'),
 			'oa_single_sign_on_js_202b' => __ ('Detected FSOCKOPEN on Port 80 - do not forget to save your changes!', 'oa_single_sign_on'),
-			'oa_single_sign_on_js_202c' => __ ('FSOCKOPEN is available but both ports (80, 443) are blocked for outbound requests', 'oa_single_sign_on'),
+			'oa_single_sign_on_js_202c' => __ ('FSOCKOPEN is available but both ports (80, 443) are blocked for outbound requests.', 'oa_single_sign_on'),
 			'oa_single_sign_on_js_211' => __ ('Autodetection Error - Please make sure that either PHP CURL or FSOCKOPEN are installed and enabled.', 'oa_single_sign_on'),
+			'oa_single_sign_on_js_301' => __ ('The SSO API is not enabled in the subscription plan of this OneAll site.', 'oa_single_sign_on')
 		));
 	}
 }
@@ -332,7 +357,6 @@ function oa_single_sign_on_admin_settings_validate ($settings)
  */
 function oa_single_sign_on_admin_settings_menu ()
 {
-	echo WP_CONTENT_DIR . '/debug.log';
 	// Read settings
 	$settings = get_option ('oa_single_sign_on_settings');
 
@@ -353,9 +377,10 @@ function oa_single_sign_on_admin_settings_menu ()
 									<?php _e ('Get Started!', 'oa_single_sign_on'); ?>
 								</div>
 								<p>
-									<?php printf (__ ('To setup Single Sign-On you first of all need to create a free account at %s and setup a Site.', 'oa_single_sign_on'), '<a href="https://app.oneall.com/signup/wp" target="_blank">http://www.oneall.com</a>'); ?>
+									<?php printf (__ ('To setup Single Sign-On you first of all need to create an account at %s and setup a Site.', 'oa_single_sign_on'), '<a href="https://app.oneall.com/signup/wp" target="_blank">http://www.oneall.com</a>'); ?>
 									<?php _e ('After having created your account and setup your Site, please enter the Site settings in the form below.', 'oa_single_sign_on'); ?>
-									<?php _e ("Don't worry the setup is free and takes only a few minutes!", 'oa_single_sign_on'); ?>
+									<?php _e ("Don't worry the setup takes only a few minutes!", 'oa_single_sign_on'); ?>
+									<strong><?php _e ("Please note that a OneAll plan that includes the SSO API is required in order for the plugin to function correctly.", 'oa_single_sign_on'); ?></strong>
 								</p>
 								<p class="oa_single_sign_on_button_wrap">
 									<a class="button-secondary" href="https://app.oneall.com/signup/wp" target="_blank"><strong><?php _e ('Click here to setup your free account', 'oa_single_sign_on'); ?></strong></a>

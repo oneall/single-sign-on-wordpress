@@ -760,7 +760,7 @@ function oa_single_sign_on_check_for_sso_login ()
 						oa_single_sign_login_user ($user);
 
 						// Update status.
-						$status->action = 'new_user_login';
+						$status->action = 'new_user_created_login';
 						$status->user_token = $user_token;
 						$status->identity_token = $identity_token;
 						$status->user = $user;
