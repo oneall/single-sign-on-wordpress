@@ -5,7 +5,7 @@ Plugin URI: http://www.oneall.com/
 Description: Automatically sign in users as they browse between multiple and independent WordPress blogs in your ecosystem.
 Version: 1.0
 Author: OneAll
-Author URI: http://www.oneall.com/
+Author URI: http://www.oneall.com/company/imprint/
 License: GPL2
 */
 
