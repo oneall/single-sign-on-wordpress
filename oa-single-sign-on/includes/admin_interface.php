@@ -6,7 +6,7 @@
 function oa_single_sign_on_admin_menu ()
 {
 	// Setup
-	$page = add_menu_page ('OneAll Single Sign On ' . __ ('Settings', 'oa_single_sign_on'), 'Single Sign On', 'manage_options', 'oa_single_sign_on_settings', 'oa_single_sign_on_admin_settings_menu', 'dashicons-admin-network');
+	$page = add_menu_page ('OneAll Single Sign On ' . __ ('Settings', 'oa_single_sign_on'), 'Single Sign-On', 'manage_options', 'oa_single_sign_on_settings', 'oa_single_sign_on_admin_settings_menu', 'dashicons-admin-network');
 	add_action ('admin_print_styles-' . $page, 'oa_single_sign_on_admin_css');
 
 	// Fix Setup title
