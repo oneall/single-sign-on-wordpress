@@ -6,9 +6,9 @@ Tested up to: 4.8
 Stable tag: 1.0
 
 Single Sign-On for WordPress is a professional extension that automatically signs users in as they browse between multiple and independent WordPress blogs in your network. 
-Take away the need for your users to re-enter their authentication credentials when they switch from one of your shops to another.
+Take away the need for your users to re-enter their authentication credentials when they switch from one of your blogs to another.
 
-Single Sign-On can be installed within minutes, is 100% compliant with all European and U.S. data protection laws and seamlessly integrates into your Magento shop. 
+Single Sign-On can be installed within minutes, is 100% compliant with all European and U.S. data protection laws and seamlessly integrates into your WordPress. 
 
 
 == Description ==
