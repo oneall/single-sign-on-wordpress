@@ -136,7 +136,9 @@
   margin: 0 0 25px;
 }
 
-.oa_single_sign_on_table textarea,.oa_single_sign_on_table input {
+.oa_single_sign_on_table textarea,
+.oa_single_sign_on_table input,
+.oa_single_sign_on_table select {
   border-color: #aaa;
 }
 
@@ -215,13 +217,4 @@
   background: url("../img/status_ok.png") no-repeat scroll 0 50% #ddd;
   padding-left: 25px;
   font-weight: bold;
-}
-
-
-.oa_single_sign_on_table a.social-sharing{
-	background-image: url("../img/social_sharing.png");
-	background-repeat:no-repeat;
-    display: block;
-    height: 250px;
-    width:772px;
 }

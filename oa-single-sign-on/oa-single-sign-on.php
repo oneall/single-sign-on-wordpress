@@ -4,7 +4,7 @@ Plugin Name: Single Sign-On
 Plugin URI: http://www.oneall.com/
 Description: Automatically sign in users as they browse between multiple and independent WordPress blogs in your ecosystem.
 Version: 1.0
-Author: Claude Schlesser
+Author: OneAll
 Author URI: http://www.oneall.com/
 License: GPL2
 */
@@ -36,14 +36,16 @@ add_filter ('plugin_action_links', 'oa_single_sign_on_add_setup_link', 10, 2);
 
 
 /**
- * Include required files
+ * Include required files.
  */
 require_once(dirname (__FILE__) . '/includes/toolbox.php');
-require_once(dirname (__FILE__) . '/includes/communication.php');
-require_once(dirname (__FILE__) . '/includes/plugin.php');
-require_once(dirname (__FILE__) . '/includes/admin.php');
+require_once(dirname (__FILE__) . '/includes/api_com_handler.php');
+require_once(dirname (__FILE__) . '/includes/api_sso_handler.php');
+require_once(dirname (__FILE__) . '/includes/user_interface.php');
+require_once(dirname (__FILE__) . '/includes/admin_interface.php');
+require_once(dirname (__FILE__) . '/includes/core.php');
 
 /**
- * Initialise
+ * Initialise plugin.
  */
 add_action('init', 'oa_single_sign_on_init', 10);
