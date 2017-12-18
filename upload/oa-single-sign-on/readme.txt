@@ -3,7 +3,7 @@ Contributors: OneAll.com, ClaudeSchlesser
 Tags: single sign on, sso, access control, single login, single password, automatic login, automatic authentication, login, authentication
 Requires at least: 3.0
 Tested up to: 4.8
-Stable tag: 1.0
+Stable tag: 1.0.0
 
 Single Sign-On for WordPress is a professional extension that automatically signs users in as they browse between multiple and independent WordPress blogs in your network. 
 Take away the need for your users to re-enter their authentication credentials when they switch from one of your blogs to another.
@@ -46,5 +46,5 @@ Our team answers your questions at:<br />
 http://support.oneall.com/forums/
 
 == Changelog ==
-= 1.0 =
+= 1.0.0 =
 * Initial release
