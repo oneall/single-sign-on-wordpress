@@ -211,7 +211,6 @@ function oa_single_sign_prefill_login()
 }
 add_action('login_head', 'oa_single_sign_prefill_login');
 
-
 /**
  * Add the CSS required by notices
  **/

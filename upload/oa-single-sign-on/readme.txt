@@ -1,33 +1,54 @@
 === Single Sign-On SSO ===
 Contributors: OneAll.com, ClaudeSchlesser
-Tags: single sign on, sso, access control, single login, single password, automatic login, automatic authentication, login, authentication
+Tags: single sign on, sso, access control, single login, single password, automatic login, automatic authentication, login, authentication, magento, opencart
 Requires at least: 3.0
-Tested up to: 4.8
-Stable tag: 1.0.0
+Tested up to: 5.2
+Stable tag: 2.0.0
 
-Single Sign-On for WordPress is a professional extension that automatically signs users in as they browse between multiple and independent WordPress blogs in your network. 
-Take away the need for your users to re-enter their authentication credentials when they switch from one of your blogs to another.
-
-Single Sign-On can be installed within minutes, is 100% compliant with all European and U.S. data protection laws and seamlessly integrates into your WordPress. 
+Single Sign-On is a professional SSO extension that works accross different domains, servers and websites. Installed in just a few minutes.
 
 
 == Description ==
 
-= Single Sign-On Plugin =
+= WordPress Single Sign-On =
 
-**Please note that a OneAll plan that includes the SSO API is required in order for the plugin to function correctly.**
+<strong>Single Sign-On for WordPress is a professional SSO extension that automatically creates accounts and signs users in as they browse between multiple and independent WordPress blogs in your network.</strong> 
 
-Single Sign-On for WordPress is a **professionally developed** extension that automatically signs users in as they browse between multiple and independent WordPress 
-blogs in your network. Take away the need for your users to re-enter their authentication credentials when they switch from one of your shops to another.
+<em>Please note that the central [SSO Server](http://www.oneall.com/services/customer-identity-management/single-sign-on/) is provided by the OneAll User Integration Platform and requires a plan that includes the SSO API.</em>
 
-**Seamlessly Integrates**<br />
-Single Sign-On seamlessly integrates with your existing login/registration system so that your users don't have to start from scratch. 
+**Advantages**<br /><br />
+Take away the need for your users to create new accounts or re-enter their authentication credentials when they switch from one of your blogs to another.<br /> 
+Reduce the user abandonment rates by making the transition from one domain to another as seamless as possible.
 
-**Deployed In Minutes**<br />
-OneAll SSO is deployed in minutes and there is no hardware or software installation required. 
+<br />**Features**<br /><br />
 
-**Professionally Developed and Maintained**
-Single Sign-On is maintained by [OneAll](http://www.oneall.com), a technology company offering a set of web-delivered tools to simplify the user integration into business and personal websites and apps. 
+  * Reduces user abandonment rates,
+  * Seamless transition for users from one blog to another,
+  * Installed in just a few minutes,
+  * No need to setup your own server,
+  * State-of-the-art security environment,
+  * 100% compliant with all US & EU data protection laws,
+  * Works across different and independent domains or databases,
+  * Integrates with our turnkey plugins for [OpenCart](https://www.opencart.com/index.php?route=marketplace/extension/info&extension_id=32346) and Magento,
+  * Integrates with any website using our [SSO API](https://docs.oneall.com/services/implementation-guide/single-sign-on/),
+  * Top-notch support and integration help.
+
+
+<br />**State-of-the-art security**<br /><br />
+Single Sign-On is powered by the [OneAll User Integration platform](https://www.oneall.com), a state-of-the-art security environment that is 100% compliant with all US & EU data protection laws - including GDPR - and used by more than 300,000 websites worldwide - including small websites, growing startups and large corporate enterprises.
+
+
+<br />**Works across different websites and platforms**<br /><br />
+The extension is fully compatible with our other [SSO plugins](https://docs.oneall.com/plugins/) like per example for OpenCart or Magento.<br /><br />
+Just install the extensions for WordPress and OpenCart or Magento and easily create a single sign-on network between multiple platforms.<br /><br />
+Optionally you can also use our [SSO API](https://docs.oneall.com/services/implementation-guide/single-sign-on/) to create a single sign-on network between your WordPress and any other website.
+
+
+<br />**Dedicated support team**<br /><br />
+A dedicated support teams is there to assist you if you should have any questions or custom needs.
+
+<br />**Professionally developed and maintained**<br /><br />
+Single Sign-On is maintained by [OneAll](https://www.oneall.com), a technology company offering a set of web-delivered tools to simplify the user integration into business and personal websites and apps. 
 
 == Installation ==
 
@@ -46,5 +67,12 @@ Our team answers your questions at:<br />
 http://support.oneall.com/forums/
 
 == Changelog ==
+
+= 2.0.0 = 
+* Complete review of the plugin
+
+= 1.0.1 =
+* Setup simplified
+
 = 1.0.0 =
 * Initial release

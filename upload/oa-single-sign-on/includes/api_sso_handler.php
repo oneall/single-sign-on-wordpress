@@ -165,7 +165,7 @@ function oa_single_sign_on_lookup_user_auth_cloud ($field, $value, $password)
 		if (is_object ($user) && $user instanceof WP_User && ! empty ($user->ID))
 		{
 			// Add log.
-			oa_single_sign_on_add_log ('[TRY CLOUD LOGIN] [UID' . $user->ID . '] Trying login with [' . $field .':' . $value . ']');
+			oa_single_sign_on_add_log ('[TRY CLOUD LOGIN] [UID' . $user->ID . '] Trying login with [' . $field .':{' . $value . '}]');
 
 			// We have the user, check if he has tokens
 			$tokens = oa_single_sign_on_get_local_storage_tokens_for_user ($user);
@@ -254,7 +254,7 @@ function oa_single_sign_on_lookup_user ($login, $password)
 		if ($result->is_successfull === true)
 		{
 			// Add Log.
-			oa_single_sign_on_add_log ('[LOOKUP USER] User [' . $result->user->ID . '] found for email ' . $login);
+			oa_single_sign_on_add_log ('[LOOKUP USER] [UID' . $result->user->ID . '] User found for email [{' . $login .'}]');
 
 			// Update Status
 			$status->is_successfull = true;
@@ -274,7 +274,7 @@ function oa_single_sign_on_lookup_user ($login, $password)
 	if ($result->is_successfull === true)
 	{
 		// Add Log.
-		oa_single_sign_on_add_log ('[LOOKUP USER] User [' . $result->user->ID . '] found for login ' . $login);
+		oa_single_sign_on_add_log ('[LOOKUP USER] [UID' . $result->user->ID . '] User found for login [{' . $login .'}]');
 
 		// Update Status
 		$status->is_successfull = true;
@@ -478,7 +478,7 @@ function oa_single_sign_on_check_for_sso_login ()
 					$identity_token = $data->user->identity->identity_token;
 
 					// Add Log.
-					oa_single_sign_on_add_log ('[CALLBACK] Token user_token [' . $user_token . '] / identity_token [' . $identity_token . '] retrieved for connection_token [' . $connection_token . ']');
+					oa_single_sign_on_add_log ('[CALLBACK] Token user_token [' . $user_token . '] / identity_token [' . $identity_token . '] retrieved');
 
 					// Add to status.
 					$status->user_token = $user_token;
@@ -491,7 +491,7 @@ function oa_single_sign_on_check_for_sso_login ()
 					if (is_object ($user) && $user instanceof WP_User && ! empty ($user->ID))
 					{
 						// Add Log.
-						oa_single_sign_on_add_log ('[CALLBACK] Customer [' . $user->ID . '] logged in for user_token [' . $user_token . ']');
+						oa_single_sign_on_add_log ('[CALLBACK] [UID' . $user->ID . '] User logged in for user_token [' . $user_token . ']');
 
 						// Update (This is just to make sure that the table is always correct).
 						oa_single_sign_on_add_local_storage_tokens_for_user ($user, $user_token, $identity_token);
@@ -525,13 +525,13 @@ function oa_single_sign_on_check_for_sso_login ()
 							$status->user = $user;
 
 							// Add log.
-							oa_single_sign_on_add_log ('[CALLBACK] [U' . $user->ID . '] User found for email [' . $email . ']');
+							oa_single_sign_on_add_log ('[CALLBACK] [UID' . $user->ID . '] User found for email [{' . $email . ']}');
 
 							// Automatic link is disabled.
 							if ($ext_settings['accounts_autolink'] == 'nobody')
 							{
 								// Add log.
-								oa_single_sign_on_add_log ('[CALLBACK] [U' . $user->ID . '] Autolink is disabled for everybody.');
+								oa_single_sign_on_add_log ('[CALLBACK] [UID' . $user->ID . '] Autolink is disabled for everybody.');
 
 								// Update status.
 								$status->action = 'existing_user_no_login_autolink_off';
@@ -546,7 +546,7 @@ function oa_single_sign_on_check_for_sso_login ()
 								if (user_can ($user->ID , 'manage_options'))
 								{
 									// Add log.
-									oa_single_sign_on_add_log ('[CALLBACK] [U' . $user->ID . '] User is admin and autolink is disabled for admins');
+									oa_single_sign_on_add_log ('[CALLBACK] [UID' . $user->ID . '] User is admin and autolink is disabled for admins');
 
 									// Update status.
 									$status->action = 'existing_user_no_login_autolink_not_allowed';
@@ -562,7 +562,7 @@ function oa_single_sign_on_check_for_sso_login ()
 								if ($email_is_verified)
 								{
 									// Add Log.
-									oa_single_sign_on_add_log ('[CALLBACK] [U' . $user->ID . '] Autolink enabled/Email verified. Linking user_token [' . $user_token . '] to user');
+									oa_single_sign_on_add_log ('[CALLBACK] [UID' . $user->ID . '] Autolink enabled/Email verified. Linking user_token [' . $user_token . '] to user');
 
 									// Add to database.
 									$add_tokens = oa_single_sign_on_add_local_storage_tokens_for_user ($user, $user_token, $identity_token);
@@ -581,7 +581,7 @@ function oa_single_sign_on_check_for_sso_login ()
 									if ($ext_settings ['accounts_linkunverified'] == 'enabled')
 									{
 										// Add Log.
-										oa_single_sign_on_add_log ('[CALLBACK] [U' . $user->ID . '] Autolink enabled/Email unverified. Linking user_token [' . $user_token . '] to user');
+										oa_single_sign_on_add_log ('[CALLBACK] [UID' . $user->ID . '] Autolink enabled/Email unverified. Linking user_token [' . $user_token . '] to user');
 
 										// Add to database.
 										$add_tokens = oa_single_sign_on_add_local_storage_tokens_for_user ($user, $user_token, $identity_token);
@@ -596,7 +596,7 @@ function oa_single_sign_on_check_for_sso_login ()
 									else
 									{
 										// Add Log.
-										oa_single_sign_on_add_log ('[CALLBACK] [U' . $user->ID . '] Autolink enabled/Unverified email not allowed. May not link user_token [' . $user_token . '] to user');
+										oa_single_sign_on_add_log ('[CALLBACK] [UID' . $user->ID . '] Autolink enabled/Unverified email not allowed. May not link user_token [' . $user_token . '] to user');
 
 										// Update Status.
 										$status->action = 'existing_user_no_login_autolink_off_unverified_emails';
@@ -612,7 +612,7 @@ function oa_single_sign_on_check_for_sso_login ()
 						else
 						{
 							// Add Log
-							oa_single_sign_on_add_log ('[CALLBACK] No user found for email [' . $email . ']');
+							oa_single_sign_on_add_log ('[CALLBACK] No user found for email [{' . $email . '}]');
 						}
 					}
 					else
@@ -805,7 +805,7 @@ function oa_single_sign_on_check_for_sso_login ()
 					if (is_numeric ($userid) && ($user = get_userdata ($userid)) !== false)
 					{
 						// 	Add log.
-						oa_single_sign_on_add_log ('[SSO Callback] New user [' . $user->ID . '] created for user_token [' . $user_token . ']');
+						oa_single_sign_on_add_log ('[SSO Callback]  [UID' . $user->ID . '] User created for user_token [' . $user_token . ']');
 
 						// Send registration email?
 						if ($ext_settings ['accounts_sendmail'])
@@ -814,10 +814,13 @@ function oa_single_sign_on_check_for_sso_login ()
 							if (!$email_is_random)
 							{
 								// Send Email.
-								// $customer->sendNewAccountEmail ('registered');
+								if (function_exists( 'wp_new_user_notification' ))
+								{
+									wp_new_user_notification ($user->ID);
+								}
 
 								// Add log.
-								oa_single_sign_on_add_log ('[SSO Callback] New user, registration email send to user [' . $user->ID . ']');
+								oa_single_sign_on_add_log ('[SSO Callback] [UID' . $user->ID . '] New user created. Sending registration email');
 							}
 						}
 
@@ -922,7 +925,7 @@ function oa_single_sign_on_add_user_to_cloud_storage ($user)
 				$status->identity_token = $decoded_result->response->result->data->user->identity->identity_token;
 
 				// Add Log.
-				oa_single_sign_on_add_log ('[ADD CLOUD] Email [' . $user->user_email . '] found in cloud storage, user_token [' . $status->user_token . '] identity_token [' . $status->identity_token . '] assigned');
+				oa_single_sign_on_add_log ('[ADD CLOUD] Email [{' . $user->user_email . '}] found in cloud storage, user_token [' . $status->user_token . '] identity_token [' . $status->identity_token . '] assigned');
 
 				// Done.
 				return $status;
@@ -1050,7 +1053,7 @@ function oa_single_sign_on_add_user_to_cloud_storage ($user)
 				$status->identity_token = $decoded_result->response->result->data->user->identity->identity_token;
 
 				// Add Log.
-				oa_single_sign_on_add_log ('[ADD CLOUD] [U' . $user->ID . '] User added, user_token [' . $status->user_token . '] and identity_token [' . $status->identity_token . '] assigned');
+				oa_single_sign_on_add_log ('[ADD CLOUD] [UID' . $user->ID . '] User added, user_token [' . $status->user_token . '] and identity_token [' . $status->identity_token . '] assigned');
 
 				// Done.
 				return $status;
@@ -1193,7 +1196,6 @@ function oa_single_sign_on_remove_local_sso_session_token_for_user ($user)
 }
 
 
-
 /**
  * Removes the cloud storage tokens of a user from the local database.
  */
@@ -1278,7 +1280,8 @@ function oa_single_sign_on_start_session_for_identity_token ($identity_token)
 						'sso_session' => array(
 							'top_realm' => $ext_settings ['session_top_realm'],
 							'sub_realm' => $ext_settings ['session_sub_realm'],
-							'lifetime' => $ext_settings ['session_lifetime']
+							'lifetime' => $ext_settings ['session_lifetime'],
+						    'data' => get_site_url()
 						)
 					)
 				))
