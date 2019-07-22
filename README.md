@@ -12,9 +12,9 @@ https://wordpress.org/plugins/single-sign-on-sso/
 
 
 ## About Us
-Single Sign-On is maintained by [OneAll](https://www.oneall.com). OneAll, a technology company offering a set of 
-web-delivered tools and services for establishing and optimizing a site's connection with social networks.
-
+Single Sign-On is maintained by [OneAll](https://www.oneall.com), a technology company offering Social network integration 
+and user storage as as service. Our services are used by more than 300,000 websites worldwide, including small blogs, growing 
+startups and large corporate enterprises. 
 
 ## License
 The **GNU General Public License** (GPL) is available at  
