@@ -14,144 +14,148 @@ function oa_single_sign_on_init ()
 		load_plugin_textdomain (' oa_single_sign_on', false, OA_SINGLE_SIGN_ON_BASE_PATH . '/languages/');
 	}
 
-	// Read settings
-	$ext_settings = oa_single_sign_on_get_settings ();
-
-	// Check if we have a single sign-on login.
-	$status = oa_single_sign_on_check_for_sso_login ();
-
-	// Check what needs to be done.
-	switch (strtolower ($status->action))
+	// Is the plugin configured?
+	if (oa_single_sign_on_is_configured())
 	{
-		// //////////////////////////////////////////////////////////////////////////
-		// No user found and we cannot add users
-		// //////////////////////////////////////////////////////////////////////////
-		case 'new_user_no_login_autocreate_off' :
+    	// Read settings
+    	$ext_settings = oa_single_sign_on_get_settings ();
 
-		    // Grace Period
-		    oa_single_sign_on_set_login_wait_cookie ($settings ['blocked_wait_relogin']);
+    	// Check if we have a single sign-on login.
+    	$status = oa_single_sign_on_check_for_sso_login ();
 
-		    // Add Log.
-		    oa_single_sign_on_add_log ('[INIT] @'.$status->action.'] Guest detected but account creation is disabled. Blocking automatic SSO re-login for [' . $settings ['blocked_wait_relogin'] . '] seconds, until [' . date("d/m/y H:i:s", $settings ['blocked_wait_relogin']) . ']');
+    	// Check what needs to be done.
+    	switch (strtolower ($status->action))
+    	{
+    		// //////////////////////////////////////////////////////////////////////////
+    		// No user found and we cannot add users.
+    		// //////////////////////////////////////////////////////////////////////////
+    		case 'new_user_no_login_autocreate_off' :
 
-		break;
+    		    // Grace Period
+    		    oa_single_sign_on_set_login_wait_cookie ($settings ['blocked_wait_relogin']);
 
-		// //////////////////////////////////////////////////////////////////////////
-		// User found and logged in
-		// //////////////////////////////////////////////////////////////////////////
+    		    // Add Log.
+    		    oa_single_sign_on_add_log ('[INIT] @'.$status->action.'] Guest detected but account creation is disabled. Blocking automatic SSO re-login for [' . $settings ['blocked_wait_relogin'] . '] seconds, until [' . date("d/m/y H:i:s", $settings ['blocked_wait_relogin']) . ']');
 
-		// Created a new user.
-		case 'new_user_created_login':
+    		break;
 
-		// Logged in using the user_token.
-		case 'existing_user_login_user_token' :
+    		// //////////////////////////////////////////////////////////////////////////
+    		// User found and logged in.
+    		// //////////////////////////////////////////////////////////////////////////
 
-		// Logged in using a verified email address.
-		case 'existing_user_login_email_verified' :
+    		// Created a new user.
+    		case 'new_user_created_login':
 
-			// Logged in using an un-verified email address.
-		case 'existing_user_login_email_unverified' :
+    		// Logged in using the user_token.
+    		case 'existing_user_login_user_token' :
 
-			// Add Log
-			oa_single_sign_on_add_log ('[INIT] @'.$status->action.' - User is logged in');
+    		// Logged in using a verified email address.
+    		case 'existing_user_login_email_verified' :
 
-			// Remove cookies.
-			oa_single_sign_on_unset_login_wait_cookie ();
+    		// Logged in using an un-verified email address.
+    		case 'existing_user_login_email_unverified' :
 
-			// Login user.
-			oa_single_sign_login_user ($status->user);
+    			// Add log.
+    			oa_single_sign_on_add_log ('[INIT] @'.$status->action.' - User is logged in');
 
-			// Are we one the login page?
-			if (oa_single_sign_on_is_login_page ())
-			{
-			    // Do we have a redirection parameter?
-			    if (!empty ($_GET ['redirect_to']))
-			    {
-			        $redirect_to = esc_url_raw($_GET ['redirect_to']);
-			    }
-			    else
-			    {
-			        $redirect_to = admin_url ();
-			    }
-			}
-			else
-			{
-			    $redirect_to = oa_single_sign_on_get_current_url();
-			}
+    			// Remove cookies.
+    			oa_single_sign_on_unset_login_wait_cookie ();
 
-			// Redirect.
-			wp_safe_redirect ($redirect_to);
-			exit ();
+    			// Login user.
+    			oa_single_sign_login_user ($status->user);
 
-		break;
+    			// Are we one the login page?
+    			if (oa_single_sign_on_is_login_page ())
+    			{
+    			    // Do we have a redirection parameter?
+    			    if (!empty ($_GET ['redirect_to']))
+    			    {
+    			        $redirect_to = esc_url_raw($_GET ['redirect_to']);
+    			    }
+    			    else
+    			    {
+    			        $redirect_to = admin_url ();
+    			    }
+    			}
+    			else
+    			{
+    			    $redirect_to = oa_single_sign_on_get_current_url();
+    			}
 
-		// //////////////////////////////////////////////////////////////////////////
-		// User found, but we cannot log him in
-		// //////////////////////////////////////////////////////////////////////////
+    			// Redirect.
+    			wp_safe_redirect ($redirect_to);
+    			exit ();
 
-		// User found, but autolink disabled.
-		case 'existing_user_no_login_autolink_off' :
+    		break;
 
-		// User found, but autolink not allowed.
-		case 'existing_user_no_login_autolink_not_allowed':
+    		// //////////////////////////////////////////////////////////////////////////
+    		// User found, but we cannot log him in
+    		// //////////////////////////////////////////////////////////////////////////
 
-		// Customer found, but autolink disabled for unverified emails.
-		case 'existing_user_no_login_autolink_off_unverified_emails' :
+    		// User found, but autolink disabled.
+    		case 'existing_user_no_login_autolink_off' :
 
-			// Add a notice for the user.
-			oa_single_sign_on_enable_user_notice ($status->user);
+    		// User found, but autolink not allowed.
+    		case 'existing_user_no_login_autolink_not_allowed':
 
-			// Grace period.
-			oa_single_sign_on_set_login_wait_cookie ($settings ['blocked_wait_relogin']);
+    		// Customer found, but autolink disabled for unverified emails.
+    		case 'existing_user_no_login_autolink_off_unverified_emails' :
 
-			// Add log.
-			oa_single_sign_on_add_log ('[INIT] @'.$status->action.'] - Blocking automatic SSO re-login for [' . $settings ['blocked_wait_relogin'] . '] seconds, until [' . date("d/m/y H:i:s", $settings ['blocked_wait_relogin']) . ']');
+    			// Add a notice for the user.
+    			oa_single_sign_on_enable_user_notice ($status->user);
 
-		break;
+    			// Grace period.
+    			oa_single_sign_on_set_login_wait_cookie ($settings ['blocked_wait_relogin']);
 
-		// //////////////////////////////////////////////////////////////////////////
-		// Default
-		// //////////////////////////////////////////////////////////////////////////
+    			// Add log.
+    			oa_single_sign_on_add_log ('[INIT] @'.$status->action.'] - Blocking automatic SSO re-login for [' . $settings ['blocked_wait_relogin'] . '] seconds, until [' . date("d/m/y H:i:s", $settings ['blocked_wait_relogin']) . ']');
 
-		// No callback received
-		case 'no_callback_data_received':
+    		break;
 
-		// Default
-		default :
+    		// //////////////////////////////////////////////////////////////////////////
+    		// Default
+    		// //////////////////////////////////////////////////////////////////////////
 
-		    // If this value is in the future, we should not try to login the user with SSO.
-			$login_wait = oa_single_sign_on_get_login_wait_value_from_cookie ();
+    		// No callback received.
+    		case 'no_callback_data_received':
 
-			// Either the user is logged in (in this case refresh the session) or the wait time is over.
-			if (is_user_logged_in())
-			{
-			    // Read current user.
-			    $user = wp_get_current_user();
+    		// Default.
+    		default :
 
-			    // Add log.
-			    oa_single_sign_on_add_log ('[INIT] @'.$status->action.'] [UID' . $user->ID . '] - User is logged in, refreshing SSO session');
+    		    // If this value is in the future, we should not try to login the user with SSO.
+    			$login_wait = oa_single_sign_on_get_login_wait_value_from_cookie ();
 
-			    // Enqueue scripts.
-				oa_single_sign_on_enqueue_scripts();
-			}
-			else
-			{
-			    // Wait time exceeded?
-			    if ($login_wait < time ())
-			    {
-			        // Add log.
-			        oa_single_sign_on_add_log ('[INIT] @'.$status->action.' - User is logged out. Checking for valid SSO session');
+    			// Either the user is logged in (in this case refresh the session) or the wait time is over.
+    			if (is_user_logged_in())
+    			{
+    			    // Read current user.
+    			    $user = wp_get_current_user();
 
-			        // Enqueue scripts.
-			        oa_single_sign_on_enqueue_scripts();
-			    }
-			    else
-			    {
-			        oa_single_sign_on_add_log ('[INIT] @'.$status->action.' - User is logged out. Re-login disabled, ' . ($login_wait - time ()) . ' seconds remaining');
-			    }
-			}
+    			    // Add log.
+    			    oa_single_sign_on_add_log ('[INIT] @'.$status->action.'] [UID' . $user->ID . '] - User is logged in, refreshing SSO session');
 
-		break;
+    			    // Enqueue scripts.
+    				oa_single_sign_on_enqueue_scripts();
+    			}
+    			else
+    			{
+    			    // Wait time exceeded?
+    			    if ($login_wait < time ())
+    			    {
+    			        // Add log.
+    			        oa_single_sign_on_add_log ('[INIT] @'.$status->action.' - User is logged out. Checking for valid SSO session');
+
+    			        // Enqueue scripts.
+    			        oa_single_sign_on_enqueue_scripts();
+    			    }
+    			    else
+    			    {
+    			        oa_single_sign_on_add_log ('[INIT] @'.$status->action.' - User is logged out. Re-login disabled, ' . ($login_wait - time ()) . ' seconds remaining');
+    			    }
+    			}
+
+    		break;
+    	}
 	}
 }
 

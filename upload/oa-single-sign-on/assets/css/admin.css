@@ -1,220 +1,287 @@
-/* ********************* Page Wrapper */
-#oa_single_sign_on_page {
-  max-width: 900px;
-}
-
-#oa_single_sign_on_page.oa_single_sign_on_more{
-	width:774px;
-}
-
-
-/* ********************* Plugins */
-.oa_single_sign_on_plugin{
-	border: 1px solid #ccc;
-    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
-	margin: 10px 0 25px;
-}
-
-.oa_single_sign_on_plugin .oa_single_sign_on_plugin_img img{
-    float: left;
-    height: 250px;
-    width: 772px;
-}
-
-.oa_single_sign_on_plugin a.button-primary{
-	height: 21px;
-	line-height: 19px;
-	padding: 0 10px;
-	vertical-align: top;
-}
-
-.oa_single_sign_on_plugin .oa_single_sign_on_plugin_desc {
- background: #eee none repeat scroll 0 0;
-    border-top: 1px solid #fcfcfc;
-    box-shadow: 0 0 42px 0 rgba(100, 100, 100, 0.1) inset;
+#sso-welcome {
+    background-color: #fff;
+    padding: 20px;
     font-size: 16px;
-    line-height: 24px;
+}
+
+#sso-welcome .sso-title {
+    font-size: 26px;
+    margin: 10px 0 30px 0;
+    text-align: center;
+}
+
+#sso-welcome .sso-info {
+    margin: 0 0 30px 0;
+    padding: 20px;
     overflow: hidden;
-    padding: 15px;
-    text-shadow: 0 1px 1px #fff;
+    background-color: #dff0d8;
 }
 
-/* ********************* Boxes */
-.oa_single_sign_on_box {
-  border: 1px solid #CCCCCC;
-  margin-bottom: 35px;
-  padding: 10px 15px;
+#sso-welcome .sso-info p{
+    color: #3c763d;
+    text-align: center;
+    line-height: 28px;    
+    font-size: 17px;
+    margin: 0;   
+    line-height: 30px;
 }
 
-.oa_single_sign_on_box .oa_single_sign_on_box_title {
-  border-bottom: 1px solid #ccc;
-  font-size: 15px;
-  font-weight: bold;
-  padding-bottom: 5px;
+#sso-welcome .sso-logo {
+    padding: 40px 0;
+    text-align: center;
+    clear: both;
+    overflow: hidden;
 }
 
-.oa_single_sign_on_box .oa_single_sign_on_button_wrap{
-	text-align:center;
-	padding: 10px 0 20px;
+#sso-welcome .sso-boxes .sso-box {
+    width: 33.33%;
+    float: left;
 }
 
-.oa_single_sign_on_box .oa_single_sign_on_button_wrap a{
-	font-size: 14px;
-	height: 40px;
-	line-height: 40px;
-	padding: 0 33px;	
-	margin:0 10px;
+#sso-welcome .sso-boxes .sso-box .sso-box-wrap {
+    padding: 20px 40px;
+    background-color: #f4f4f4;
+    height: 180px;
 }
 
-
-
-#oa_single_sign_on_box_started{
-  background-color: #dff0d8;
-  border-color: #c4d7b4;
-  color: #3c763d;
+#sso-welcome .sso-boxes .sso-box-about-plugin .sso-box-wrap {
+    margin: 0 40px;
 }
 
-#oa_single_sign_on_box_started a {
-	color: #1a541b;
+#sso-welcome .sso-boxes .sso-box .sso-box-title {
+    font-size: 20px;
+    text-align: center;
+    color: #0073aa;
+    font-weight: bold;
+    margin-top: 5px;
 }
 
-#oa_single_sign_on_box_started a:hover{
-	text-decoration:none;
-	color: #111;
+#sso-welcome .sso-boxes .sso-box .sso-box-body p {
+    font-size: 15px;
+    text-align: justify;
 }
 
-#oa_single_sign_on_box_started a.button-secondary{
-	color: #555;
+#sso-welcome .sso-start {
+    text-align: center;
+    margin: 40px 0;
+    line-height: 80px;
 }
 
-#oa_single_sign_on_box_started h3{
-	text-align:center;
-	color: #4a844b;
+#sso-welcome .sso-start a.sso-btn {
+    background-color: #00BE28;
+    border: 1px solid #00a523;
+    border-width: 1px 1px 2px 1px;
+    color: white;
+    cursor: pointer;
+    font-size: 24px;
+    padding: 20px 50px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: white;
 }
 
-#oa_single_sign_on_box_status {
-  background-color: #E1EDFF;
+#sso-welcome .sso-start a:hover {
+    background: #00a523;
+    border-color: #008b1d;
+    color: white;
 }
 
-#oa_single_sign_on_box_notice {
-  background-color: #C4F095;
+#sso-welcome .clearfix::after {
+    content: "";
+    clear: both;
+    display: table;
 }
 
-#oa_single_sign_on_box_help {
-  background-color: #FFFFE0;
-  border-color: #E6DB55;
-  margin-bottom: 35px;
+#sso-setup {
+    background-color: #fff;
+    padding: 20px;
+    font-size: 16px;
 }
 
-#oa_single_sign_on_box_help ul {
-  padding-left: 20px;
-  list-style-type: disc;
+#sso-setup .sso-title {
+    font-size: 26px;
+    margin: 10px 0 30px 0;
+    text-align: center;
 }
 
-#oa_single_sign_on_box_help .oa_single_sign_on_box_title {
-  border-color: #E6DB55;
+#sso-setup .sso-info {
+    font-size: 18px;
+    background-color: #0073aa;
+    margin: 5px 0 30px 0;
+    padding: 20px;
+    overflow: hidden;
+    text-align: center;
+    color: #fff;
+    line-height: 28px;
 }
 
-#oa_single_sign_on_box_help a {
-  color: #111;
+#sso-setup .sso-setup-message {
+    background-color: #dff0d8;
+    padding: 5px 20px;
+    margin-bottom: 20px;
 }
 
-#oa_single_sign_on_box_help a:hover {
-  color: #d54e21;
+#sso-setup .sso-setup-message p {
+    color: #3c763d;
+    font-size: 16px;
+    text-align: center;
 }
 
-#oa_single_sign_on_box_updated {
-  background-color: green;
-  color: #fff;
-  font-weight: bold;
+#sso-setup .sso-updated-message {
+    color: #fff;
+    font-size: 18px;
+    margin-bottom: 15px;
+    background: #009300;
+    padding: 20px;
+    text-align: center;
 }
 
-/* ********************* Tables */
-.oa_single_sign_on_table {
-  background-color: #efefef;
-  border: 1px solid #ccc;
-  margin: 0 0 25px;
+#sso-setup p.sso-access-account {
+    text-align: center;
+    line-height: 45px;
 }
 
-.oa_single_sign_on_table textarea,
-.oa_single_sign_on_table input,
-.oa_single_sign_on_table select {
-  border-color: #aaa;
+#sso-setup p.sso-access-account a.sso-btn {
+    border: 0 none;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 10px 50px;
+    border-radius: 10px;
+    text-decoration: none;
 }
 
-.oa_single_sign_on_table tr.row_head th {
-  font-size: 13px;
-  font-weight: bold;
-  background-color: #3E687B;
-  color: #fff;
-  text-shadow: 0 1px 0 #333;
-  padding-left: 10px;
+#sso-setup p.sso-access-account a.sso-btn-login {
+    background-color: #00BE28;
+    color: #fff;
 }
 
-.oa_single_sign_on_table tr.row_head th a {
-  color: #F1EE10;
+#sso-setup p.sso-access-account a.sso-btn-help {
+    background-color: #1890C9;
+    color: #fff;
 }
 
-.oa_single_sign_on_table tr.row_head th a:hover {
-  color: #fff;
-  text-decoration: none;
+#sso-setup p.sso-access-account a.sso-btn-login:hover {
+    background: #00a523;
 }
 
-.oa_single_sign_on_table tr.row_odd,
-.oa_single_sign_on_table tr.row_odd td {
-  color: #222;
-  background-color: #ddd;
-  border-bottom: 1px dotted #BBBBBB;
-  line-height: 23px
+#sso-setup p.sso-access-account a.sso-btn-help:hover {
+    background-color: #257FB8;
 }
 
-.oa_single_sign_on_table tr.row_even,
-.oa_single_sign_on_table tr.row_even td {
-  color: #333;
-  background-color: #fff;
-  border-bottom: 1px dotted #bbb;
-  line-height: 23px
+#sso-setup .form-table {
+    background-color: #f4f4f4;
+    margin-bottom: 20px;
 }
 
-
-.oa_single_sign_on_table td.col_unpadded{
-	padding:0;
+#sso-setup .form-table tr.sso-row-head th {
+    font-size: 14px;
+    font-weight: bold;
+    background-color: #0073aa;
+    color: #fff;
+    line-height: 15px;
+    padding: 15px 0 15px 10px;
+    overflow: hidden
 }
 
-.oa_single_sign_on_table tr td.row_multi {
-  border-right: 1px dotted #BBBBBB;
+#sso-setup .form-table tr.sso-row-head th a{
+    color: #fff;
 }
 
-.oa_single_sign_on_table tr.row_foot td {
-  background-color: #ddd;
+#sso-setup .form-table tr.sso-row-head th a:hover{
+    text-decoration:none;
+    color: #ffff43;
 }
 
-.oa_single_sign_on_table tr.row_foot .error_message {
-  color: red;
-  background: url("../img/status_error.png") no-repeat scroll 0 50% #ddd;
-  padding-left: 25px;
-  font-weight: bold;
+#sso-setup .form-table td.sso-col-label {
+    width: 20%;
+    text-align: center;
+    font-size: 15px;
+    color: #606060;
 }
 
-.oa_single_sign_on_table tr.row_foot .error_message,.oa_single_sign_on_table tr.row_foot .error_message a {
-  color: red;
-  font-weight: bold;
+#sso-setup .form-table td.sso-col-label label{
+    cursor: default
 }
 
-.oa_single_sign_on_table tr.row_foot .working_message {
-  color: blue;
-  background: url("../img/status_loading.gif") no-repeat scroll 0 50% #ddd;
-  padding-left: 25px;
-  font-weight: bold;
+#sso-setup .form-table td.sso-col-label label[for]{
+    cursor: pointer;
 }
 
-.oa_single_sign_on_table tr.row_foot .error_message a:hover {
-  color: #C70000;
+#sso-setup .form-table td.sso-col-value {
+    width: 80%;
 }
 
-.oa_single_sign_on_table tr.row_foot .success_message {
-  color: green;
-  background: url("../img/status_ok.png") no-repeat scroll 0 50% #ddd;
-  padding-left: 25px;
-  font-weight: bold;
+#sso-setup .form-table tr.sso-row-even td {
+    background-color: #ececec;
+    overflow: hidden
+}
+
+#sso-setup .form-table tr.sso-row-foot td {
+    background-color: #dee2e4;
+    overflow: hidden
+}
+
+#sso-setup .form-table .working_message {
+    color: #0085ba;
+    font-weight: bold;
+    background: url("../img/status_loading.gif") no-repeat scroll 0 50% transparent;
+    padding-left: 25px;
+}
+
+#sso-setup .form-table .success_message {
+    color: #00a403;
+    font-weight: bold;
+    background: url("../img/status_ok.png") no-repeat scroll 0 50% transparent;
+    padding-left: 25px;
+}
+
+#sso-setup .form-table .error_message {
+    color: #f00000;
+    font-weight: bold;
+    background: url("../img/status_error.png") no-repeat scroll 0 50% transparent;
+    padding-left: 25px;
+}
+
+#sso-setup .form-table select, 
+#sso-setup .form-table input[type="text"] {
+    padding: 5px;
+    margin: 0;
+    width: 400px;
+}
+
+#sso-setup .form-table .description {
+    margin-top: 10px;
+    display: inline-block;
+    width: 600px;
+}
+
+#sso-setup .sso-submit {
+    text-align: center;
+}
+
+#sso-setup .sso-submit .sso-save {
+    background-color: #00BE28;
+    border: 1px solid #00a523;
+    border-width: 1px 1px 2px 1px;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 10px 50px;
+    border-radius: 10px;
+    text-decoration: none;
+}
+
+#sso-setup .sso-debug-log {
+    width: 100%;
+    margin: 0;
+    background-color: #fcfcfc;
+    overflow: auto;
+    white-space: pre;
+}
+
+#sso-setup .sso-submit .sso-save:hover {
+    background: #00a523;
+    border-color: #008b1d;
+    color: white;
 }

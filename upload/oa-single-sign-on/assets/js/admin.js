@@ -9,7 +9,7 @@ jQuery(document).ready(function($) {
 		var data = {
 				_ajax_nonce: objectL10n.oa_single_sign_on_ajax_nonce,
 				action: 'oa_single_sign_on_admin_autodetect_api_connection_handler'
-			};
+		};
 		
 		message_container = jQuery('#oa_single_sign_on_api_connection_handler_result');	
 		message_container.removeClass('success_message error_message').addClass('working_message');

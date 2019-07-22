@@ -385,7 +385,11 @@ function oa_single_sign_on_admin_settings_validate ($settings)
  */
 function oa_single_sign_on_admin_settings_menu ()
 {
-    if (get_option ('oa_single_sign_welcome_read') !== '1')
+    // Read settings.
+    $ext_settings = oa_single_sign_on_get_settings();
+
+    // We cannot make a connection without the subdomain.
+    if (empty($ext_settings['api_subdomain']) && empty ($_REQUEST ['action']))
     {
         oa_single_sign_on_admin_settings_menu_welcome ();
     }
@@ -410,7 +414,12 @@ function oa_single_sign_on_admin_settings_menu_welcome()
                     Thank you for using Single Sign-On!
                 </div>
                 <div class="sso-info">
-                    Automatically create accounts and sign users in as they browse between  multiple and independent blogs in your eco-system or among partner sites.
+                    <p>
+                        Single Sign-On automatically creates accounts and signs users in as they browse between multiple and independent blogs or websites in your eco-system.
+                    </p>
+                    <p>
+                        Share user data between your websites and take away the need for yours users to re-enter their authentication credentials on each of your websites.
+                    </p>
                 </div>
                 <div class="sso-logo">
                     <img src="<?php echo OA_SINGLE_SIGN_ON_PLUGIN_URL ?>/assets/img/logo.png" alt="Single Sign-On" />
@@ -452,7 +461,8 @@ function oa_single_sign_on_admin_settings_menu_welcome()
                               <p>
                                  The setup will only take a few minutes and a dedicated support team is there is assist you during the integration.
                                  The plugin is fully compatible with our <a href="https://docs.oneall.com/plugins/#filter-sso" target="_blank">other SSO plugins</a>
-                                 and we also have a <a href="https://docs.oneall.com/services/implementation-guide/single-sign-on/" target="_blank">full implementation guide</a> allowing you to connect your WordPress to any other platforms.
+                                 and we also have a <a href="https://docs.oneall.com/services/implementation-guide/single-sign-on/" target="_blank">full implementation guide</a> allowing you to
+                                 build an SSO network between your WordPress and any other of your websites.
                               </p>
                           </div>
                          </div>
@@ -460,7 +470,7 @@ function oa_single_sign_on_admin_settings_menu_welcome()
                 </div>
                 <div class="clearfix"></div>
                 <div class="sso-start">
-                  <a href="admin.php?page=oa_single_sign_on_settings" class="sso-btn">Setup Single-Sign On</a>
+                  <a href="admin.php?page=oa_single_sign_on_settings&amp;action=setup" class="sso-btn">Click here to get started</a>
                 </div>
             </div>
          </div>
@@ -487,19 +497,13 @@ function oa_single_sign_on_admin_settings_menu_display()
 					if (empty (	$settings ['api_subdomain']))
 					{
 						?>
-						    <div class="sso-info">
-                               <?php
-                                   _e ('Automatically create accounts and sign users in as they browse between  multiple and independent blogs in your eco-system or among partner sites.', 'oa_single_sign_on');
-                               ?>
-                            </div>
 							<div class="sso-setup-message">
 								<p>
 									To enable Single Sign-On you first of all need to create a <a href="https://app.oneall.com/signup/wpsso" target="_blank">OneAll</a> account.
 									The OneAll SSO server will securely encrypt the data and make it available to other websites in your eco-system.
 									This allows the seamless login and registration of your users when they go from on of your websites to another.
 									The service is 100% compliant with all US &amp; EU data protection laws and includes 99,95% Uptime SLA.
-							     </p>
-							     <p>
+
 									After having created your OneAll account, please create a new site and upgrade it to a <a href="https://www.oneall.com/pricing-and-plans/premium/" target="_blank">plan</a> that includes the SSO API.
 									This will give you the API credentials that are necessary to enable Single Sign-On.<br />
 							     </p>
@@ -592,7 +596,7 @@ function oa_single_sign_on_admin_settings_menu_display()
 						</tr>
 						<tr class="sso-row sso-row-foot">
 							<td class="sso-col sso-col-label">
-								<a class="button-primary" id="oa_single_sign_on_admin_autodetect_api_connection_handler" href="#"><?php _e ('Autodetect API Connection', 'oa_single_sign_on'); ?></a>
+								<a class="button-primary" id="oa_single_sign_on_admin_autodetect_api_connection_handler" href="#"><?php _e ('Click to autodetect API Connection', 'oa_single_sign_on'); ?></a>
 							</td>
 							<td class="sso-col sso-col-value">
 								<div id="oa_single_sign_on_api_connection_handler_result"></div>
@@ -634,7 +638,7 @@ function oa_single_sign_on_admin_settings_menu_display()
 						</tr>
 						<tr class="sso-row sso-row-foot">
 							<td class="sso-col sso-col-label">
-								<a class="button-primary" id="oa_single_sign_on_admin_check_api_settings" href="#"><?php _e ('Verify API Settings', 'oa_single_sign_on'); ?> </a>
+								<a class="button-primary" id="oa_single_sign_on_admin_check_api_settings" href="#"><?php _e ('Click to verify API Credentials', 'oa_single_sign_on'); ?> </a>
 							</td>
 							<td class="sso-col sso-col-value">
 								<div id="oa_single_sign_on_api_test_result"></div>
