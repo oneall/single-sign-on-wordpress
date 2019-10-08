@@ -7,7 +7,7 @@
 /**
  * Parses the debug log.
  */
-function oa_single_sign_on_parse_debug_log ($prefix = '[OASSO]')
+function oa_single_sign_on_parse_debug_log($prefix = '[OASSO]')
 {
     // File to read.
     $debug_file = WP_CONTENT_DIR . '/debug.log';
@@ -17,35 +17,34 @@ function oa_single_sign_on_parse_debug_log ($prefix = '[OASSO]')
     $result = '';
 
     // Check if file exists.
-    if ( ! file_exists ($debug_file))
+    if (!file_exists($debug_file))
     {
-        $result = sprintf (__('The debug file (%s) does not seem to exist.'), $debug_file);
+        $result = sprintf(__('The debug file (%s) does not seem to exist.'), $debug_file);
     }
     else
     {
-        if ( ! is_readable ($debug_file))
+        if (!is_readable($debug_file))
         {
-            $result = sprintf (__('The debug file (%s) is not readable.'), $debug_file);
+            $result = sprintf(__('The debug file (%s) is not readable.'), $debug_file);
         }
         else
         {
             if ($fh = fopen($debug_file, 'r'))
             {
-                $lines = array ();
+                $lines = array();
 
                 while (!feof($fh))
                 {
                     $line = trim(fgets($fh));
-                    if (substr( $line, 0, $prefix_length ) == $prefix)
+                    if (substr($line, 0, $prefix_length) == $prefix)
                     {
                         $lines[] = trim(substr($line, $prefix_length));
                     }
                 }
                 fclose($fh);
 
-
                 // Format.
-                $result = implode ("\n", array_reverse(array_slice($lines, -100)));
+                $result = implode("\n", array_reverse(array_slice($lines, -100)));
             }
         }
     }
@@ -76,6 +75,7 @@ function oa_single_sign_on_get_login_wait_value_from_cookie()
     {
         return $_COOKIE[OA_SINGLE_SIGN_ON_LOGIN_WAIT_COOKIE_KEY];
     }
+
     return 0;
 }
 
@@ -127,6 +127,7 @@ function oa_single_sign_on_hash_string($password)
     }
 
     // Error
+
     return null;
 }
 
@@ -215,6 +216,7 @@ function oa_single_sign_on_is_configured()
     }
 
     // Not useable
+
     return false;
 }
 
@@ -241,7 +243,7 @@ function oa_single_sign_on_get_settings()
 
     // Automatic Account Creation.
     $settings['accounts_autocreate'] = (isset($args['accounts_autocreate']) ? $args['accounts_autocreate'] : 'enabled');
-    $settings['accounts_autocreate'] = ((in_array($settings['accounts_autocreate'], array('enabled', 'disabled' ))) ? $settings['accounts_autocreate'] : 'enabled');
+    $settings['accounts_autocreate'] = ((in_array($settings['accounts_autocreate'], array('enabled', 'disabled'))) ? $settings['accounts_autocreate'] : 'enabled');
 
     // Automatic Account Link.
     $settings['accounts_autolink'] = (isset($args['accounts_autolink']) ? $args['accounts_autolink'] : 'everybody_except_admin');
@@ -281,6 +283,7 @@ function oa_single_sign_on_get_settings()
     $settings['api_url'] = ($settings['connection_protocol'] . '://' . $settings['base_url']);
 
     // Done
+
     return $settings;
 }
 
@@ -357,6 +360,7 @@ function oa_single_sign_on_get_current_url()
     $current_url = apply_filters('oa_single_sign_on_filter_current_url', $current_url);
 
     // Done
+
     return $current_url;
 }
 
@@ -375,6 +379,7 @@ function oa_single_sign_on_get_disabled_functions()
         $disabled_functions = explode(',', $disabled_functions);
         $disabled_functions = array_map('trim', $disabled_functions);
     }
+
     return $disabled_functions;
 }
 
@@ -393,6 +398,7 @@ function oa_single_sign_on_esc_attr($string)
     {
         return attribute_escape($string);
     }
+
     return htmlspecialchars($string);
 }
 
@@ -419,6 +425,7 @@ function oa_single_sign_on_get_user_for_email($email)
     }
 
     // Error
+
     return null;
 }
 
@@ -430,10 +437,10 @@ function oa_single_sign_on_create_random_email($domain = 'example.com')
     do
     {
         $email = md5(uniqid(wp_rand(10000, 99000))) . '@' . $domain;
-    }
-    while ( email_exists($email) );
+    } while (email_exists($email));
 
     // Done
+
     return $email;
 }
 
@@ -464,6 +471,7 @@ function oa_single_sign_on_get_user_for_user_token($token)
     }
 
     // Error
+
     return null;
 }
 
@@ -484,5 +492,6 @@ function oa_single_sign_on_get_token_by_userid($userid)
     }
 
     $sql = "SELECT um.meta_value FROM " . $wpdb->usermeta . " AS um	INNER JOIN " . $wpdb->users . " AS u ON (um.user_id=u.ID)	WHERE um.meta_key = 'oa_single_sign_on_user_token' AND u.ID=%d";
+
     return $wpdb->get_var($wpdb->prepare($sql, $userid));
 }

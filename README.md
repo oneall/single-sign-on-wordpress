@@ -1,4 +1,4 @@
-# Single Sign-On 2.0.1 for WordPress 3.0+
+# Single Sign-On 2.0.2 for WordPress 3.0+
 Single Sign-On (SSO) allows you to immediately sign in users as they browse between multiple and independent websites in your ecosystem. 
 Take away the need for yours users to re-enter their authentication credentials when they switch from one of your WordPress blogs to another. 
 
