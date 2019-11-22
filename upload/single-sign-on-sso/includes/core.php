@@ -128,12 +128,12 @@ function oa_single_sign_on_init()
                     // We have a valid session token, refresh it.
                     if (!empty($token->sso_session_token) && (int) $token->sso_session_token_next_update > time())
                     {
-                        single_sign_on_core_dump('[INIT] @' . $status->action . '] [UID' . $user->uid . '] - User is logged in, refreshing session token [' . $token->sso_session_token . ']');
+                        oa_single_sign_on_add_log('[INIT] @' . $status->action . '] [UID' . $user->uid . '] - User is logged in, refreshing session token [' . $token->sso_session_token . ']');
                     }
                     else
                     {
                         // Add log.
-                        oa_single_sign_on_add_log('[INIT] @' . $status->action . '] [UID' . $user->ID . '] - User is logged in, refreshing SSO session');
+                        oa_single_sign_on_add_log('[INIT] @' . $status->action . '] [UID' . $user->ID . '] - User is logged in but SSO out of date, Synchronize SSO session with OneAll');
 
                         // Check if already logged in user has Cloud Storage user (should have)
                         $oa_single_sign_on_identity_token = get_user_meta($user->ID, 'oa_single_sign_on_identity_token', true);

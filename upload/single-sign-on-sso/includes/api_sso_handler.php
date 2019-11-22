@@ -1142,7 +1142,8 @@ function oa_single_sign_on_add_local_sso_session_token_for_user($user, $sso_sess
             delete_user_meta($user->ID, 'oa_single_sign_on_sso_session_token_expiration');
         }
 
-        update_user_meta($user->ID, 'oa_single_sign_on_sso_session_token_next_update', (int) strtotime("+5 minutes"));
+        $sso_session_token_next_update = (int) strtotime("+5 minutes");
+        update_user_meta($user->ID, 'oa_single_sign_on_sso_session_token_next_update', $sso_session_token_next_update);
 
         // Update Status.
         $status->sso_session_token_next_update = $sso_session_token_next_update;
