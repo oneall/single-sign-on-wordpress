@@ -123,7 +123,7 @@ function oa_single_sign_on_init()
                     oa_single_sign_on_enqueue_scripts();
 
                     // Read the user's sso session token
-                    $tokens = oa_single_sign_on_get_local_storage_tokens_for_user($user);
+                    $token = oa_single_sign_on_get_local_storage_tokens_for_user($user);
 
                     // We have a valid session token, refresh it.
                     if (!empty($token->sso_session_token) && (int) $token->sso_session_token_next_update > time())
