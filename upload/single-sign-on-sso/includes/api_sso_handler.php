@@ -30,7 +30,7 @@ function oa_single_sign_on_update_user_in_cloud($user, $password = null)
                     'user' => array()
                 );
 
-                // Password updated.
+                // Password to be updated?
                 if (!empty($password))
                 {
                     $request['user']['password'] = oa_single_sign_on_hash_string($password);
@@ -47,33 +47,33 @@ function oa_single_sign_on_update_user_in_cloud($user, $password = null)
                 {
                     $request['user']['identity']['name'] = array();
 
-                    // First Name.
+                    // First name.
                     if (!empty($user->first_name))
                     {
                         $request['user']['identity']['name']['givenName'] = $user->first_name;
                     }
 
-                    // Last Name.
+                    // Last name.
                     if (!empty($user->last_name))
                     {
                         $request['user']['identity']['name']['familyName'] = $user->last_name;
                     }
                 }
 
-                // About Me.
+                // User description.
                 if (!empty($user->description))
                 {
                     $request['user']['identity']['aboutMe'] = $user->description;
                 }
 
-                // User Avatar.
+                // User avatar.
                 $user_avatar = get_avatar_data($user->ID);
                 if (!empty($user_avatar['url']))
                 {
                     $request['user']['identity']['thumbnailUrl'] = $user_avatar['url'];
                 }
 
-                // User Roles.
+                // User roles.
                 if (isset($user->roles) && is_array($user->roles) && count($user->roles) > 0)
                 {
                     $request['user']['identity']['roles'] = array();
@@ -115,11 +115,11 @@ function oa_single_sign_on_update_user_in_cloud($user, $password = null)
                 if (is_object($result) && property_exists($result, 'http_code') && $result->http_code == 200)
                 {
                     // Update status.
-                    $status->action = 'customer_cloud_storage_password_updated';
+                    $status->action = 'user_updated_in_cloud_storage';
                     $status->is_successfull = true;
 
                     // Add log.
-                    oa_single_sign_on_add_log('[UPDATE CLOUD USER] Profile for user [' . $user->ID . ', ' . $tokens->user_token . '] updated in cloud storage');
+                    oa_single_sign_on_add_log('[USER-UPDATE-API] [UID' . $user->ID . '] user_token [' . $tokens->user_token . '] updated');
                 }
                 else
                 {
@@ -169,7 +169,7 @@ function oa_single_sign_on_lookup_user_auth_cloud($field, $value, $password)
         if (is_object($user) && $user instanceof WP_User && !empty($user->ID))
         {
             // Add log.
-            oa_single_sign_on_add_log('[TRY CLOUD LOGIN] [UID' . $user->ID . '] Trying login with [' . $field . ':{' . $value . '}]');
+            oa_single_sign_on_add_log('[USER-LOOKUP-API] [UID' . $user->ID . '] Trying login with [' . $field . ':{' . $value . '}]');
 
             // We have the user, check if he has tokens
             $tokens = oa_single_sign_on_get_local_storage_tokens_for_user($user);
@@ -207,20 +207,19 @@ function oa_single_sign_on_lookup_user_auth_cloud($field, $value, $password)
                     if ($result->http_code == 401)
                     {
                         // Add log.
-                        oa_single_sign_on_add_log('[TRY CLOUD LOGIN] [UID' . $user->ID . '] Login failed, falling back to native authentication');
+                        oa_single_sign_on_add_log('[USER-LOOKUP-API] [UID' . $user->ID . '] Login failed, falling back to native authentication');
                     }
                     // Correct password entered.
                     elseif ($result->http_code == 200)
                     {
                         // Add Log.
-                        oa_single_sign_on_add_log('[TRY CLOUD LOGIN] [UID' . $user->ID . '] Login succeeded, user_token [' . $tokens->user_token . '] assigned');
+                        oa_single_sign_on_add_log('[USER-LOOKUP-API] [UID' . $user->ID . '] Login succeeded, user_token [' . $tokens->user_token . '] assigned');
 
                         // Update status
                         $status->is_successfull = true;
                         $status->user = $user;
 
                         // Done.
-
                         return $status;
                     }
                 }
@@ -228,7 +227,7 @@ function oa_single_sign_on_lookup_user_auth_cloud($field, $value, $password)
             else
             {
                 // Add log.
-                oa_single_sign_on_add_log('[TRY CLOUD LOGIN] [UID' . $user->ID . '] User has no local tokens, falling back to native authentication');
+                oa_single_sign_on_add_log('[USER-LOOKUP-API] [UID' . $user->ID . '] User has no local tokens, falling back to native authentication');
             }
         }
     }
@@ -238,7 +237,6 @@ function oa_single_sign_on_lookup_user_auth_cloud($field, $value, $password)
     }
 
     // Not found
-
     return $status;
 }
 
@@ -251,52 +249,53 @@ function oa_single_sign_on_lookup_user($login, $password)
     $status = new stdClass();
     $status->is_successfull = false;
 
-    // Login using an email address.
-    if (filter_var($login, FILTER_VALIDATE_EMAIL))
-    {
-        // Lookup using an email address.
-        $result = oa_single_sign_on_lookup_user_auth_cloud('email', $login, $password);
+    // Both arguments are required.
+    if ( ! empty ($login) && ! empty ($password))
+    {        
+        // Login using an email address.
+        if (filter_var($login, FILTER_VALIDATE_EMAIL))
+        {
+            // Lookup using an email address.
+            $result = oa_single_sign_on_lookup_user_auth_cloud('email', $login, $password);
+    
+            // Found user for the email/password.
+            if ($result->is_successfull === true)
+            {
+                // Add Log.
+                oa_single_sign_on_add_log('[USER-LOOKUP] [UID' . $result->user->ID . '] User found for email [{' . $login . '}]');
+    
+                // Update status.
+                $status->is_successfull = true;
+                $status->user = $result->user;
+                $status->field = 'email';
+                $status->value = $login;
+    
+                // Done.
+                return $status;
+            }
+        }
 
+       // Lookup using a login.
+        $result = oa_single_sign_on_lookup_user_auth_cloud('login', $login, $password);
+    
         // Found user for the email/password.
         if ($result->is_successfull === true)
         {
-            // Add Log.
-            oa_single_sign_on_add_log('[LOOKUP USER] [UID' . $result->user->ID . '] User found for email [{' . $login . '}]');
-
+            // Add log.
+            oa_single_sign_on_add_log('[USER-LOOKUP] [UID' . $result->user->ID . '] User found for login [{' . $login . '}]');
+    
             // Update status.
             $status->is_successfull = true;
             $status->user = $result->user;
             $status->field = 'email';
             $status->value = $login;
-
+    
             // Done.
-
             return $status;
         }
     }
 
-    // Lookup using a login.
-    $result = oa_single_sign_on_lookup_user_auth_cloud('login', $login, $password);
-
-    // Found user for the email/password.
-    if ($result->is_successfull === true)
-    {
-        // Add log.
-        oa_single_sign_on_add_log('[LOOKUP USER] [UID' . $result->user->ID . '] User found for login [{' . $login . '}]');
-
-        // Update status.
-        $status->is_successfull = true;
-        $status->user = $result->user;
-        $status->field = 'email';
-        $status->value = $login;
-
-        // Done.
-
-        return $status;
-    }
-
     // Error.
-
     return $status;
 }
 
@@ -310,7 +309,7 @@ function oa_single_sign_on_end_session_for_user($user)
     $status->is_successfull = false;
 
     // Add log.
-    oa_single_sign_on_add_log('[END SESSION] [UID' . $user->ID . '] Removing session token');
+    oa_single_sign_on_add_log('[SESSION-END] [UID' . $user->ID . '] Removing session token');
 
     // Read local storage.
     $tokens = oa_single_sign_on_get_local_storage_tokens_for_user($user);
@@ -327,14 +326,10 @@ function oa_single_sign_on_end_session_for_user($user)
         {
             // Success
             $status->is_successfull = true;
-
-            // Add log.
-            oa_single_sign_on_add_log('[END SESSION] [UID' . $user->ID . '] Session token removed');
         }
     }
 
     // Done.
-
     return $status;
 }
 
@@ -351,13 +346,13 @@ function oa_single_sign_on_start_session_for_user($user, $retry_if_invalid = tru
     $tokens = oa_single_sign_on_get_local_storage_tokens_for_user($user);
 
     // User has no tokens yet.
-    if (!$tokens->have_been_retrieved || (int) $token->sso_session_token_next_update < time())
+    if (!$tokens->have_been_retrieved)
     {
         // Add log.
-        oa_single_sign_on_add_log('[START SESSION] [UID' . $user->ID . '] User has no token. Creating token.');
+        oa_single_sign_on_add_log('[SESSION-START] [UID' . $user->ID . '] User has no tokens. Creating tokens.');
 
         // Add user to cloud storage.
-        $add_user = oa_single_sign_on_core_synchronize_user_to_cloud_storage($user);
+        $add_user = oa_single_sign_on_add_user_to_cloud_storage($user);
 
         // User added.
         if ($add_user->is_successfull === true)
@@ -367,13 +362,10 @@ function oa_single_sign_on_start_session_for_user($user, $retry_if_invalid = tru
             $status->user_token = $add_user->user_token;
 
             // Add log.
-            oa_single_sign_on_add_log('[START SESSION] [UID' . $user->ID . '] Tokens created, user_token [' . $status->user_token . '] identity_token [' . $status->identity_token . ']');
+            oa_single_sign_on_add_log('[SESSION-START] [UID' . $user->ID . '] Tokens created, user_token [' . $status->user_token . '] identity_token [' . $status->identity_token . ']');
 
-            // Add user token to database.
+            // Add to database.
             $add_tokens = oa_single_sign_on_add_local_storage_tokens_for_user($user, $status->user_token, $status->identity_token);
-
-            // Add sso token to database.
-            $sso_tokens = oa_single_sign_on_add_local_sso_session_token_for_user($user, $tokens->sso_session_token);
         }
     }
     // User has already tokens.
@@ -384,14 +376,14 @@ function oa_single_sign_on_start_session_for_user($user, $retry_if_invalid = tru
         $status->user_token = $tokens->user_token;
 
         // Add log.
-        oa_single_sign_on_add_log('[START SESSION] [UID' . $user->ID . '] User has already tokens, user_token [' . $status->user_token . '] identity_token [' . $status->identity_token . ']');
+        oa_single_sign_on_add_log('[SESSION-START] [UID' . $user->ID . '] User has already tokens, user_token [' . $status->user_token . '] identity_token [' . $status->identity_token . ']');
     }
 
     // Start a new session.
     if (!empty($status->identity_token))
     {
         // Add log.
-        oa_single_sign_on_add_log('[START SESSION] [UID' . $user->ID . '] Starting session');
+        oa_single_sign_on_add_log('[SESSION-START] [UID' . $user->ID . '] Starting session');
 
         // Start a new session.
         $start_session = oa_single_sign_on_start_session_for_identity_token($status->identity_token);
@@ -405,7 +397,7 @@ function oa_single_sign_on_start_session_for_user($user, $retry_if_invalid = tru
             $status->is_successfull = true;
 
             // Add Log.
-            oa_single_sign_on_add_log('[START SESSION] [UID' . $user->ID . '] Session created, sso_session_token [' . $status->sso_session_token . ']');
+            oa_single_sign_on_add_log('[SESSION-START] [UID' . $user->ID . '] sso_session_token [' . $status->sso_session_token . '] created');
 
             // Store session data.
             oa_single_sign_on_add_local_sso_session_token_for_user($user, $status->sso_session_token, $status->date_expiration);
@@ -416,7 +408,7 @@ function oa_single_sign_on_start_session_for_user($user, $retry_if_invalid = tru
             if ($start_session->action == 'invalid_identity_token')
             {
                 // Add log.
-                oa_single_sign_on_add_log('[START SESSION] [UID' . $user->ID . '] Removing invalid token');
+                oa_single_sign_on_add_log('[SESSION-START] [UID' . $user->ID . '] Removing invalid token');
 
                 // Remove Tokens.
                 oa_single_sign_on_remove_local_storage_tokens_for_user($user);
@@ -431,7 +423,6 @@ function oa_single_sign_on_start_session_for_user($user, $retry_if_invalid = tru
     }
 
     // Session created.
-
     return $status;
 }
 
@@ -450,6 +441,7 @@ function oa_single_sign_on_check_for_sso_login()
     // Callback handler.
     if (isset($_POST) && !empty($_POST['oa_action']) && $_POST['oa_action'] == 'single_sign_on' && isset($_POST['connection_token']) && oa_single_sign_on_is_uuid($_POST['connection_token']))
     {
+        // Parse the connection_token.
         $connection_token = $_POST['connection_token'];
 
         // Add log.
@@ -515,7 +507,6 @@ function oa_single_sign_on_check_for_sso_login()
                         $status->user = $user;
 
                         // Done.
-
                         return $status;
                     }
 
@@ -552,7 +543,6 @@ function oa_single_sign_on_check_for_sso_login()
                                 $status->action = 'existing_user_no_login_autolink_off';
 
                                 // Done.
-
                                 return $status;
                             }
                             // Automatic link is enabled.
@@ -568,7 +558,6 @@ function oa_single_sign_on_check_for_sso_login()
                                     $status->action = 'existing_user_no_login_autolink_not_allowed';
 
                                     // Done.
-
                                     return $status;
                                 }
 
@@ -585,7 +574,6 @@ function oa_single_sign_on_check_for_sso_login()
                                     $status->action = 'existing_user_login_email_verified';
 
                                     // Done.
-
                                     return $status;
                                 }
                                 // The email has NOT been verified.
@@ -604,7 +592,6 @@ function oa_single_sign_on_check_for_sso_login()
                                         $status->action = 'existing_user_login_email_unverified';
 
                                         // Done.
-
                                         return $status;
                                     }
                                     // We cannot use unverified emails.
@@ -617,7 +604,6 @@ function oa_single_sign_on_check_for_sso_login()
                                         $status->action = 'existing_user_no_login_autolink_off_unverified_emails';
 
                                         // Done.
-
                                         return $status;
                                     }
                                 }
@@ -655,7 +641,6 @@ function oa_single_sign_on_check_for_sso_login()
                         $status->action = 'new_user_no_login_autocreate_off';
 
                         // Done.
-
                         return $status;
                     }
 
@@ -881,15 +866,15 @@ function oa_single_sign_on_check_for_sso_login()
         $status->action = 'no_callback_data_received';
     }
 
-    // Done.
 
+	// Done.
     return $status;
 }
 
 /**
  * Add a user to the cloud storage.
  */
-function oa_single_sign_on_core_synchronize_user_to_cloud_storage($user)
+function oa_single_sign_on_add_user_to_cloud_storage($user, $password = null)
 {
     // Result Container
     $status = new stdClass();
@@ -904,8 +889,58 @@ function oa_single_sign_on_core_synchronize_user_to_cloud_storage($user)
     if (!empty($ext_settings['api_subdomain']))
     {
         // Add log.
-        oa_single_sign_on_add_log('[SYNCHRONIZE USER] [UID' . $user->ID . '] Synchronize data with cloud storage');
+        oa_single_sign_on_add_log('[USER-ADD-API] [UID' . $user->ID . '] Setting up user in cloud storage');
 
+        // ////////////////////////////////////////////////////////////////////////////////////////////////
+        // First make sure that we don't create duplicate users!
+        // ////////////////////////////////////////////////////////////////////////////////////////////////
+
+        // API endpoint: http://docs.oneall.com/api/resources/storage/users/lookup-user/
+        $api_resource_url = $ext_settings['api_url'] . '/storage/users/user/lookup.json';
+
+        // API options.
+        $api_options = array(
+            'api_key' => $ext_settings['api_key'],
+            'api_secret' => $ext_settings['api_secret'],
+            'api_data' => @json_encode(array(
+                'request' => array(
+                    'user' => array(
+                        'login' => $user->user_email
+                    )
+                )
+            ))
+        );
+
+        // User lookup.
+        $result = oa_single_sign_on_do_api_request($ext_settings['api_connection_handler'], $api_resource_url, 'POST', $api_options);
+
+        // Check result.
+        if (is_object($result) && property_exists($result, 'http_code') && $result->http_code == 200 && property_exists($result, 'http_data'))
+        {
+            // Decode result.
+            $decoded_result = @json_decode($result->http_data);
+
+            // Check data.
+            if (is_object($decoded_result) && isset($decoded_result->response->result->data->user))
+            {
+                // Update status.
+                $status->action = 'existing_user_read';
+                $status->is_successfull = true;
+                $status->user_token = $decoded_result->response->result->data->user->user_token;
+                $status->identity_token = $decoded_result->response->result->data->user->identity->identity_token;
+
+                // Add log.
+                oa_single_sign_on_add_log('[USER-LOOKUP-API] Email [{' . $user->user_email . '}] found in cloud storage, user_token [' . $status->user_token . '] identity_token [' . $status->identity_token . '] assigned');
+
+                // Done.
+                return $status;
+            }
+        }
+        else
+        {
+            oa_single_sign_on_add_log('[USER-LOOKUP-API] Email [{' . $user->user_email . '}] not found in cloud storage, status ['.$result->http_code.']');
+        }
+   
         // ////////////////////////////////////////////////////////////////////////////////////////////////
         // If we are getting here, then a new identity needs to be added
         // ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -990,7 +1025,7 @@ function oa_single_sign_on_core_synchronize_user_to_cloud_storage($user)
         }
 
         // API Endpoint: http://docs.oneall.com/api/resources/storage/users/create-user/
-        $api_resource_url = $ext_settings['api_url'] . '/storage/users/user/synchronize.json';
+        $api_resource_url = $ext_settings['api_url'] . '/storage/users.json';
 
         // API Options.
         $api_options = array(
@@ -998,16 +1033,10 @@ function oa_single_sign_on_core_synchronize_user_to_cloud_storage($user)
             'api_secret' => $ext_settings['api_secret'],
             'api_data' => @json_encode(array(
                 'request' => array(
-                    'synchronize' => array(
-                        'identifier' => array(
-                            'field' => 'login',
-                            'value' => $user->user_email
-                        ),
-                        'user' => array(
-                            'login' => $user->user_email,
-                            'password' => $user->user_pass,
-                            'identity' => $identity
-                        )
+                    'user' => array(
+                        'login' => $user->user_email,
+                        'password' => ( ! empty ($password) ? $password : $user->user_pass),
+                        'identity' => $identity
                     )
                 )
             )
@@ -1015,10 +1044,10 @@ function oa_single_sign_on_core_synchronize_user_to_cloud_storage($user)
         );
 
         // Add User.
-        $result = oa_single_sign_on_do_api_request($ext_settings['api_connection_handler'], $api_resource_url, 'PUT', $api_options);
+        $result = oa_single_sign_on_do_api_request($ext_settings['api_connection_handler'], $api_resource_url, 'POST', $api_options);
 
         // Check result. 201 Returned !!!
-        if (is_object($result) && property_exists($result, 'http_code') && ($result->http_code == 201 || $result->http_code == 200) && property_exists($result, 'http_data'))
+        if (is_object($result) && property_exists($result, 'http_code') && $result->http_code == 201 && property_exists($result, 'http_data'))
         {
             // Decode result.
             $decoded_result = @json_decode($result->http_data);
@@ -1027,13 +1056,13 @@ function oa_single_sign_on_core_synchronize_user_to_cloud_storage($user)
             if (is_object($decoded_result) && isset($decoded_result->response->result->data->user))
             {
                 // Update status.
-                $status->action = $result->http_code == 201 ? 'new_user_created' : 'user_updated';
+                $status->action = 'new_user_created';
                 $status->is_successfull = true;
                 $status->user_token = $decoded_result->response->result->data->user->user_token;
                 $status->identity_token = $decoded_result->response->result->data->user->identity->identity_token;
 
                 // Add Log.
-                oa_single_sign_on_add_log('[SYNCHRONIZE USER] [UID' . $user->uid . '] User ' . ($result->http_code == 201 ? 'created' : 'updated') . ', user_token [' . $status->user_token . '] and identity_token [' . $status->identity_token . '] assigned');
+                oa_single_sign_on_add_log('[USER-ADD-API] [UID' . $user->ID . '] User added, user_token [' . $status->user_token . '] and identity_token [' . $status->identity_token . '] assigned');
 
                 // Done.
 
@@ -1065,7 +1094,6 @@ function oa_single_sign_on_get_local_storage_tokens_for_user($user)
 
         // Optional
         $sso_session_token = get_user_meta($user->ID, 'oa_single_sign_on_sso_session_token', true);
-        $sso_session_token_next_update = get_user_meta($user->ID, 'oa_single_sign_on_sso_session_token_next_update', true);
 
         // Tokens found.
         if (!empty($user_token) && !empty($identity_token))
@@ -1074,7 +1102,6 @@ function oa_single_sign_on_get_local_storage_tokens_for_user($user)
             $status->identity_token = $identity_token;
             $status->user_token = $user_token;
             $status->sso_session_token = (empty($sso_session_token) ? null : $sso_session_token);
-            $status->sso_session_token_next_update = (empty($sso_session_token_next_update) ? null : $sso_session_token_next_update);
             $status->have_been_retrieved = true;
         }
     }
@@ -1099,7 +1126,6 @@ function oa_single_sign_on_get_local_sso_session_token_for_user($user)
         // Load user's sso_session_token.
         $sso_session_token = get_user_meta($user->ID, 'oa_single_sign_on_sso_session_token', true);
         $sso_session_token_expiration = get_user_meta($user->ID, 'oa_single_sign_on_sso_session_token_expiration', true);
-        $sso_session_token_next_update = get_user_meta($user->ID, 'oa_single_sign_on_sso_session_token_next_update', true);
 
         // Token found and not expired.
         if (!empty($sso_session_token) && (empty($sso_session_token_expiration) || $sso_session_token_expiration >= time()))
@@ -1107,13 +1133,11 @@ function oa_single_sign_on_get_local_sso_session_token_for_user($user)
             // Update Status.
             $status->sso_session_token = $sso_session_token;
             $status->date_expiration = $sso_session_token_expiration;
-            $status->sso_session_token_next_update = $sso_session_token_next_update;
             $status->is_successfull = true;
         }
     }
 
     // Done.
-
     return $status;
 }
 
@@ -1141,19 +1165,17 @@ function oa_single_sign_on_add_local_sso_session_token_for_user($user, $sso_sess
         {
             delete_user_meta($user->ID, 'oa_single_sign_on_sso_session_token_expiration');
         }
-
-        $sso_session_token_next_update = (int) strtotime("+5 minutes");
-        update_user_meta($user->ID, 'oa_single_sign_on_sso_session_token_next_update', $sso_session_token_next_update);
+        
+        // Add Log.
+        oa_single_sign_on_add_log('[SESSION-ADD-DB] [UID' . $user->ID . '] Meta [oa_single_sign_on_sso_session_token] added');
 
         // Update Status.
-        $status->sso_session_token_next_update = $sso_session_token_next_update;
         $status->sso_session_token = $sso_session_token;
         $status->date_expiration = $date_expiration;
         $status->is_successfull = true;
     }
 
-    // Done
-
+    // Done.
     return $status;
 }
 
@@ -1176,7 +1198,7 @@ function oa_single_sign_on_remove_local_sso_session_token_for_user($user)
         delete_user_meta($user->ID, 'oa_single_sign_on_sso_session_token');
 
         // Add Log.
-        oa_single_sign_on_add_log('[REMOVE SESSION TOKEN] [UID' . $user->ID . '] Meta [oa_single_sign_on_sso_session_token] removed');
+        oa_single_sign_on_add_log('[SESSION-REMOVE-DB] [UID' . $user->ID . '] Meta [oa_single_sign_on_sso_session_token] removed');
 
         // Update Status.
         $status->sso_session_token = $session_token;
@@ -1204,6 +1226,9 @@ function oa_single_sign_on_remove_local_storage_tokens_for_user($user)
         delete_user_meta($user->ID, 'oa_single_sign_on_user_token');
         delete_user_meta($user->ID, 'oa_single_sign_on_identity_token');
 
+        // Add log.
+        oa_single_sign_on_add_log ('[USER-UPDATE-DB] [UID' . $user->ID . '] Meta [oa_single_sign_on_user_token/oa_single_sign_on_identity_token] removed');
+        
         // Update Status.
         $status->is_successfull = true;
     }
@@ -1224,11 +1249,14 @@ function oa_single_sign_on_add_local_storage_tokens_for_user($user, $user_token,
 
     // Verify user object.
     if (is_object($user) && $user instanceof WP_User && !empty($user->ID))
-    {
+    {        
         // Set Meta.
         update_user_meta($user->ID, 'oa_single_sign_on_user_token', $user_token);
         update_user_meta($user->ID, 'oa_single_sign_on_identity_token', $identity_token);
 
+        // Add log.
+        oa_single_sign_on_add_log ('[USER-UPDATE-DB] [UID' . $user->ID . '] Meta [oa_single_sign_on_user_token/oa_single_sign_on_identity_token] added');
+        
         // Update Status.
         $status->user_token = $user_token;
         $status->identity_token = $identity_token;
@@ -1303,7 +1331,7 @@ function oa_single_sign_on_start_session_for_identity_token($identity_token)
                         $status->is_successfull = true;
 
                         // Add log.
-                        oa_single_sign_on_add_log('[START SESSION IDENTITY] Session [' . $status->sso_session_token . '] for identity [' . $identity_token . '] added to repository');
+                        oa_single_sign_on_add_log('[SESSION-ADD-API] sso_session_token [' . $status->sso_session_token . '] for identity_token [' . $identity_token . '] added to repository');
                     }
                     else
                     {
@@ -1383,7 +1411,7 @@ function oa_single_sign_on_remove_session_for_sso_session_token($sso_session_tok
                 $status->is_successfull = true;
 
                 // Add log.
-                oa_single_sign_on_add_log('[REMOVE SESSION] Session [' . $sso_session_token . '] removed from repository');
+                oa_single_sign_on_add_log('[SESSION-REMOVE-API] sso_session_token [' . $sso_session_token . '] removed from repository');
             }
         }
         // Extension not setup.
@@ -1441,7 +1469,7 @@ function oa_single_sign_on_remove_session_for_identity_token($identity_token)
                 $status->is_successfull = true;
 
                 // Add log.
-                oa_single_sign_on_add_log('[REMOVE SESSION] Sessions for identity_token [' . $identity_token . '] removed from repository');
+                oa_single_sign_on_add_log('[SESSION-REMOVE-API] Session for identity_token [' . $identity_token . '] removed from repository');
             }
         }
         // Extension not setup.
@@ -1452,96 +1480,5 @@ function oa_single_sign_on_remove_session_for_identity_token($identity_token)
     }
 
     // Done.
-
-    return $status;
-}
-
-/**
- * Get Single Sign-On session for the given identity_token.
- */
-function oa_single_sign_on_core_get_session_for_identity_token($identity_token)
-{
-    // Result container.
-    $status = new stdClass();
-    $status->is_successfull = false;
-
-    // We need the identity_token to create a session.
-    if (!empty($identity_token))
-    {
-        // Read settings.
-        $ext_settings = oa_single_sign_on_get_settings();
-
-        // We cannot make a connection without the subdomain.
-        if (!empty($ext_settings['api_subdomain']))
-        {
-            // ////////////////////////////////////////////////////////////////////////////////////////////////
-            // Start a new Single Sign-On Session
-            // ////////////////////////////////////////////////////////////////////////////////////////////////
-
-            // API Endpoint: http://docs.oneall.com/api/resources/sso/identity/start-session/
-            $api_resource_url = $ext_settings['api_url'] . '/sso/sessions/identities/' . $identity_token . '.json';
-
-            // API Options.
-            $api_options = array(
-                'api_key' => $ext_settings['api_key'],
-                'api_secret' => $ext_settings['api_secret']
-            );
-
-            // Create Session
-            $result = oa_single_sign_on_do_api_request($ext_settings['api_connection_handler'], $api_resource_url, 'GET', $api_options);
-
-            // Check result. 201 Returned !!!
-            if (is_object($result) && property_exists($result, 'http_code') && property_exists($result, 'http_data'))
-            {
-                // Success.
-                if ($result->http_code == 200)
-                {
-                    // Decode result.
-                    $decoded_result = @json_decode($result->http_data);
-
-                    // Check result.
-                    if (is_object($decoded_result) && isset($decoded_result->response->result->data->sso_session))
-                    {
-                        // Update status.
-                        $status->action = 'get_session';
-                        $status->sso_session_token = $decoded_result->response->result->data->sso_session->sso_session_token;
-                        $datetime_expiration = new Datetime($decoded_result->response->result->data->sso_session->date_expiration);
-                        $status->date_expiration = $datetime_expiration->format('U');
-                        $status->is_successfull = true;
-
-                        // Add log.
-                        oa_single_sign_on_add_log('[GET SESSION] Session [' . $status->sso_session_token . '] for identity [' . $identity_token . '] get from Cloud Storage');
-                    }
-                    else
-                    {
-                        $status->action = 'invalid_user_object';
-                    }
-                }
-                elseif ($result->http_code == 404)
-                {
-                    $status->action = 'invalid_identity_token';
-                }
-                else
-                {
-                    $status->action = ('http_error_' . $result->http_code);
-                }
-            }
-            else
-            {
-                $status->action = 'http_request_failed';
-            }
-        }
-        else
-        {
-            $status->action = 'extension_not_setup';
-        }
-    }
-    else
-    {
-        $status->action = 'empty_identity_token';
-    }
-
-    // Done.
-
     return $status;
 }

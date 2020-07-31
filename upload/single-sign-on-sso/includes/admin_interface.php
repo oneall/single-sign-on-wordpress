@@ -323,7 +323,9 @@ function oa_single_sign_on_admin_settings_validate ($settings)
 	$fields [] = 'accounts_autocreate';
 	$fields [] = 'accounts_autolink';
 	$fields [] = 'accounts_remind';
+	$fields [] = 'accounts_sync_credentials';
 	$fields [] = 'debug_log';
+	$fields [] = 'debug_level';
 	$fields [] = 'logout_wait_relogin';
 	$fields [] = 'logout_everywhere';
 
@@ -649,7 +651,7 @@ function oa_single_sign_on_admin_settings_menu_display()
 						<tr class="sso-row sso-row-head">
 							<th colspan="2" class="sso-col sso-col-label">
 								<?php
-								    _e ('Single Sign-On Settings', 'oa_single_sign_on');
+								    _e ('Account Management', 'oa_single_sign_on');
 								?>
 							</th>
 						</tr>
@@ -701,6 +703,30 @@ function oa_single_sign_on_admin_settings_menu_display()
 						</tr>
 						<tr class="sso-row sso-row-odd">
 							<td class="sso-col sso-col-label">
+								<label><?php _e ('Synchronize Credentials', 'oa_single_sign_on'); ?></label>
+							</td>
+							<td class="sso-col sso-col-value">
+								<?php
+									$accounts_sync_credentials = ((isset ($settings ['accounts_sync_credentials']) && in_array ($settings ['accounts_sync_credentials'], array ('enabled', 'disabled'))) ? $settings ['accounts_sync_credentials'] : 'enabled');
+								?>
+								<select name="oa_single_sign_on_settings[accounts_sync_credentials]" id="oa_single_sign_on_settings_accounts_accounts_sync_credentials">
+									<option value="enabled"<?php echo ($accounts_sync_credentials == 'enabled' ? ' selected="selected"' : ''); ?>><?php _e ('Enable credentials synchronization (Default)'); ?></option>
+									<option value="disabled"<?php echo ($accounts_sync_credentials == 'disabled' ? ' selected="selected"' : ''); ?>><?php _e ('Disable credentials synchronization'); ?></option>
+								</select><br />
+								<span class="description"><?php _e ("If enabled, the plugin will keep the user's credentials used in WordPress in sync with the SSO storage. This allows users to login with the same credentials on all of your blogs on which you have setup SSO.", 'oa_single_sign_on'); ?></span>
+							</td>
+						</tr>
+					</table>
+					<table class="form-table">
+						<tr class="sso-row sso-row-head">
+							<th colspan="2" class="sso-col sso-col-label">
+								<?php
+								    _e ('Session Management', 'oa_single_sign_on');
+								?>
+							</th>
+						</tr>												
+						<tr class="sso-row sso-row-odd">
+							<td class="sso-col sso-col-label">
 								<label><?php _e ('Destroy Session On Logout', 'oa_single_sign_on'); ?></label>
 							</td>
 							<td class="sso-col sso-col-value">
@@ -730,7 +756,7 @@ function oa_single_sign_on_admin_settings_menu_display()
 					<table class="form-table">
 						<tr class="sso-row sso-row-head">
 							<th class="sso-col sso-col-label" colspan="2">
-								<?php _e ('Debug Log', 'oa_single_sign_on'); ?>
+								<?php _e ('Debugging', 'oa_single_sign_on'); ?>
 							</th>
 						</tr>
 						<tr class="sso-row sso-row-odd">
@@ -749,6 +775,20 @@ function oa_single_sign_on_admin_settings_menu_display()
 							</td>
 						</tr>
 						<tr class="sso-row sso-row-even">
+							<td class="sso-col sso-col-label">
+								<label><?php _e ('Debug Level', 'oa_single_sign_on'); ?></label>
+							</td>
+							<td class="sso-col sso-col-value">
+								<?php
+									$debug_level = ((isset ($settings ['debug_level']) && in_array ($settings ['debug_level'], array ('10', '20'))) ? $settings ['debug_level'] : '20');
+								?>
+								<select name="oa_single_sign_on_settings[debug_level]" id="oa_single_sign_on_settings_debug_level">
+									<option value="10"<?php echo ($debug_level == '10' ? ' selected="selected"' : ''); ?>><?php _e ('10 - Log all messages', 'oa_single_sign_on'); ?></option>
+									<option value="20"<?php echo ($debug_level == '20' ? ' selected="selected"' : ''); ?>><?php _e ('20 - Log only important messages (Default)', 'oa_single_sign_on'); ?></option>
+									</select>
+							</td>
+						</tr>
+						<tr class="sso-row sso-row-odd">
 							<td class="sso-col sso-col-label" colspan="2">
 							    <textarea rows="10" cols="50" class="sso-debug-log regular-text code" readonly="readonly"><?php echo oa_single_sign_on_parse_debug_log(); ?></textarea>
 							</td>

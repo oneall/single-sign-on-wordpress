@@ -1,9 +1,9 @@
-=== Single Sign-On SSO ===
+=== Single Sign-On - Professional SSO solution for WordPress ===
 Contributors: OneAll.com, ClaudeSchlesser
 Tags: single sign on, sso, access control, single login, single password, automatic login, automatic authentication, login, authentication, magento, opencart
 Requires at least: 3.0
-Tested up to: 5.2
-Stable tag: 2.0.3
+Tested up to: 5.4
+Stable tag: 2.1.2
 
 Single Sign-On is a professional SSO extension that works accross different domains, servers and websites. Installed in just a few minutes.
 
@@ -12,9 +12,9 @@ Single Sign-On is a professional SSO extension that works accross different doma
 
 = WordPress Single Sign-On =
 
-<strong>Single Sign-On for WordPress is a professional SSO extension that automatically creates accounts and signs users in as they browse between multiple and independent WordPress blogs in your network.</strong> 
+<strong>Single Sign-On for WordPress is a professional SSO extension that automatically creates accounts and signs users in as they browse between multiple and independent WordPress blogs in your network. Works across different and independent servers, domains and databases.</strong> 
 
-<em>Please note that the central [SSO Server](http://www.oneall.com/services/customer-identity-management/single-sign-on/) is provided by the OneAll User Integration Platform and requires a plan that includes the SSO API.</em>
+<em>Please note that the central [SSO Server](https://www.oneall.com/services/customer-identity-management/single-sign-on/) is provided by the OneAll User Integration Platform and requires a plan that includes the SSO API.</em>
 
 **Advantages**<br /><br />
 Take away the need for your users to create new accounts or re-enter their authentication credentials when they switch from one of your blogs to another.<br /> 
@@ -64,15 +64,21 @@ In order to enable the plugin you must connect with the OneAll API and create a 
 = Where can I report bugs, leave my feedback and get support? =
 
 Our team answers your questions at:<br />
-http://support.oneall.com/forums/
+[https://support.oneall.com/forums/](https://support.oneall.com/forums/)
 
 == Changelog ==
 
-= 2.0.3 = 
-* Fix test
+= 2.1.2 =
+* Fix test for autocreating accounts
 
-= 2.0.2 = 
-* new SSO system for updating token
+= 2.1.1 =
+* String masking changed
+
+= 2.1.0 =
+* Credentials synchronization added
+* User lookup improved 
+* Log filters added
+* Log levels added
 
 = 2.0.1 = 
 * Endless loop with admin accounts fixed

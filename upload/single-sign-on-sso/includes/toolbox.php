@@ -7,7 +7,7 @@
 /**
  * Parses the debug log.
  */
-function oa_single_sign_on_parse_debug_log($prefix = '[OASSO]')
+function oa_single_sign_on_parse_debug_log ($prefix = '[OASSO]')
 {
     // File to read.
     $debug_file = WP_CONTENT_DIR . '/debug.log';
@@ -17,34 +17,35 @@ function oa_single_sign_on_parse_debug_log($prefix = '[OASSO]')
     $result = '';
 
     // Check if file exists.
-    if (!file_exists($debug_file))
+    if ( ! file_exists ($debug_file))
     {
-        $result = sprintf(__('The debug file (%s) does not seem to exist.'), $debug_file);
+        $result = sprintf (__('The debug file (%s) does not seem to exist.'), $debug_file);
     }
     else
     {
-        if (!is_readable($debug_file))
+        if ( ! is_readable ($debug_file))
         {
-            $result = sprintf(__('The debug file (%s) is not readable.'), $debug_file);
+            $result = sprintf (__('The debug file (%s) is not readable.'), $debug_file);
         }
         else
         {
             if ($fh = fopen($debug_file, 'r'))
             {
-                $lines = array();
+                $lines = array ();
 
                 while (!feof($fh))
                 {
                     $line = trim(fgets($fh));
-                    if (substr($line, 0, $prefix_length) == $prefix)
+                    if (substr( $line, 0, $prefix_length ) == $prefix)
                     {
                         $lines[] = trim(substr($line, $prefix_length));
                     }
                 }
                 fclose($fh);
 
+
                 // Format.
-                $result = implode("\n", array_reverse(array_slice($lines, -100)));
+                $result = implode ("\n", array_reverse(array_slice($lines, -100)));
             }
         }
     }
@@ -75,7 +76,6 @@ function oa_single_sign_on_get_login_wait_value_from_cookie()
     {
         return $_COOKIE[OA_SINGLE_SIGN_ON_LOGIN_WAIT_COOKIE_KEY];
     }
-
     return 0;
 }
 
@@ -99,17 +99,10 @@ function oa_single_sign_on_set_login_wait_cookie($period)
 /**
  * Mask a given string.
  */
-function oa_single_sign_on_mask($string, $keep = 3)
+function oa_single_sign_on_mask($string)
 {
-    $masked = $string;
-
-    if (strlen($string) >= $keep)
-    {
-        $masked = substr($string, 0, $keep);
-        $masked .= str_repeat('*', (strlen($string) - $keep));
-    }
-
-    return $masked;
+    // Result.
+    return preg_replace("/(?!^).(?!$)/", "*", $string); 
 }
 
 /**
@@ -127,7 +120,6 @@ function oa_single_sign_on_hash_string($password)
     }
 
     // Error
-
     return null;
 }
 
@@ -142,53 +134,69 @@ function oa_single_sign_on_get_agent()
 /**
  * Write to the WordPress log file.
  */
-function oa_single_sign_on_add_log($message)
+function oa_single_sign_on_add_log($message, $debug_level = 20)
 {
-    // Read settings
+    // Read settings.
     $ext_settings = oa_single_sign_on_get_settings();
 
-    // Is logging enabled
+    // Is logging enabled?
     if ($ext_settings['debug_log'] == 'enabled')
     {
-        // Debug file
-        $debug_folder = WP_CONTENT_DIR;
-        $debug_file = 'debug.log';
-        $debug_file_absolute = $debug_folder . '/' . $debug_file;
-        $debug_file_writeable = false;
-
-        // Make sure we can write to it.
-        if (is_writable($debug_file_absolute))
-        {
-            $debug_file_writeable = true;
-        }
-        else
-        {
-            if (!file_exists($debug_file_absolute))
+        // Debug level.
+        if ($debug_level >= $ext_settings['debug_level'])
+        {            
+            // Build debug file.
+            $debug_folder = WP_CONTENT_DIR;
+            $debug_file = 'debug.log';
+            $debug_file_absolute = $debug_folder . '/' . $debug_file;
+            $debug_file_writeable = false;
+    
+            // Apply filters.
+            $debug_file_absolute = apply_filters('oa_single_sign_on_filter_log_file', $debug_file_absolute);
+            
+            // Make sure we can write to it.
+            if (is_writable($debug_file_absolute))
             {
-                if (is_writable($debug_folder))
+                $debug_file_writeable = true;
+            }
+            else
+            {
+                if (!file_exists($debug_file_absolute))
                 {
-                    if (touch($debug_file_absolute) == true)
+                    if (is_writable($debug_folder))
                     {
-                        $debug_file_writeable = true;
+                        if (touch($debug_file_absolute) == true)
+                        {
+                            $debug_file_writeable = true;
+                        }
                     }
                 }
             }
-        }
-
-        if ($debug_file_writeable)
-        {
-            $message = trim($message);
-
-            // Masks the indicated string-
-            if (preg_match_all("/\{([^\}]+)\}/", $message, $matches, PREG_SET_ORDER))
+                    
+            // Is the file writeable?
+            if ($debug_file_writeable)
             {
-                foreach ($matches as $match)
+                // Cleanup the message.
+                $message = trim($message);
+    
+                // Masks the indicated string.
+                if (preg_match_all("/\{([^\}]+)\}/", $message, $matches, PREG_SET_ORDER))
                 {
-                    $message = str_replace($match[0], oa_single_sign_on_mask($match[1]), $message);
+                    foreach ($matches as $match)
+                    {
+                        $message = str_replace($match[0], oa_single_sign_on_mask($match[1]), $message);
+                    }
                 }
+                
+                // Log message.
+                $log_message =  '[OASSO] [' . date("d/m/y H:i:s", time()) . '] [' . $debug_level . '] ' . trim($message) . "\n";
+                
+                // Apply filters.
+                $log_message = apply_filters('oa_single_sign_on_filter_log_message', $log_message);
+    
+                // Write log.
+                @file_put_contents($debug_file_absolute, $log_message, FILE_APPEND);
             }
-
-            @file_put_contents($debug_file_absolute, '[OASSO] [' . date("d/m/y H:i:s", time()) . '] ' . trim($message) . "\n", FILE_APPEND);
         }
     }
 }
@@ -216,7 +224,6 @@ function oa_single_sign_on_is_configured()
     }
 
     // Not useable
-
     return false;
 }
 
@@ -243,7 +250,7 @@ function oa_single_sign_on_get_settings()
 
     // Automatic Account Creation.
     $settings['accounts_autocreate'] = (isset($args['accounts_autocreate']) ? $args['accounts_autocreate'] : 'enabled');
-    $settings['accounts_autocreate'] = ((in_array($settings['accounts_autocreate'], array('enabled', 'disabled'))) ? $settings['accounts_autocreate'] : 'enabled');
+    $settings['accounts_autocreate'] = ((in_array($settings['accounts_autocreate'], array('enabled', 'disabled' ))) ? $settings['accounts_autocreate'] : 'enabled');
 
     // Automatic Account Link.
     $settings['accounts_autolink'] = (isset($args['accounts_autolink']) ? $args['accounts_autolink'] : 'everybody_except_admin');
@@ -252,14 +259,18 @@ function oa_single_sign_on_get_settings()
     // Automatic Account Link for unverified email.
     $settings['accounts_linkunverified'] = (isset($args['accounts_linkunverified']) ? $args['accounts_linkunverified'] : 'enabled');
 
-    // Account Email Sending
+    // Account Email Sending.
     $settings['accounts_sendmail'] = (isset($args['accounts_sendmail']) ? $args['accounts_sendmail'] : 1);
     $settings['accounts_sendmail'] = (empty($settings['accounts_sendmail']) ? false : true);
 
-    // Account Reimder
+    // Account Reminder.
     $settings['accounts_remind'] = (isset($args['accounts_remind']) ? $args['accounts_remind'] : 'enabled');
     $settings['accounts_remind'] = (in_array($settings['accounts_remind'], array('enabled', 'disabled')) ? $settings['accounts_remind'] : 'enabled');
 
+    // Synchronize credentials.
+    $settings['accounts_sync_credentials'] = (isset($args['accounts_sync_credentials']) ? $args['accounts_sync_credentials'] : 'enabled');
+    $settings['accounts_sync_credentials'] = (in_array($settings['accounts_sync_credentials'], array('enabled', 'disabled')) ? $settings['accounts_sync_credentials'] : 'enabled');
+    
     // SSO Session Settings.
     $settings['session_lifetime'] = (isset($args['session_lifetime']) ? $args['session_lifetime'] : 86400);
     $settings['session_top_realm'] = (isset($args['session_top_realm']) ? $args['session_top_realm'] : '');
@@ -271,19 +282,22 @@ function oa_single_sign_on_get_settings()
     // Disables the re-login for this period after a logout.
     $settings['logout_wait_relogin'] = (isset($args['logout_wait_relogin']) ? $args['logout_wait_relogin'] : OA_SINGLE_SIGN_ON_LOGOUT_WAIT_RELOGIN_DEFAULT);
 
-    // Destroy Session on Logout
+    // Destroy SSO session on logout?
     $settings['logout_everywhere'] = ((isset($args['logout_everywhere']) && $args['logout_everywhere'] == 0) ? 0 : 1);
 
-    // Debug Log.
+    // Enable debug logging?
     $settings['debug_log'] = (isset($args['debug_log']) ? $args['debug_log'] : 'disabled');
     $settings['debug_log'] = ((in_array($settings['debug_log'], array('enabled', 'disabled'))) ? $settings['debug_log'] : 'disabled');
-
+    
+    // Debug level?
+    $settings['debug_level'] = (isset($args['debug_level']) ? $args['debug_level'] : '20');
+    $settings['debug_level'] = ((in_array($settings['debug_level'], array('10', '20'))) ? $settings['debug_level'] : '20');
+    
     // Helper Settings.
     $settings['base_url'] = ($settings['api_subdomain'] . '.api.oneall.com');
     $settings['api_url'] = ($settings['connection_protocol'] . '://' . $settings['base_url']);
 
     // Done
-
     return $settings;
 }
 
@@ -360,7 +374,6 @@ function oa_single_sign_on_get_current_url()
     $current_url = apply_filters('oa_single_sign_on_filter_current_url', $current_url);
 
     // Done
-
     return $current_url;
 }
 
@@ -379,7 +392,6 @@ function oa_single_sign_on_get_disabled_functions()
         $disabled_functions = explode(',', $disabled_functions);
         $disabled_functions = array_map('trim', $disabled_functions);
     }
-
     return $disabled_functions;
 }
 
@@ -398,7 +410,6 @@ function oa_single_sign_on_esc_attr($string)
     {
         return attribute_escape($string);
     }
-
     return htmlspecialchars($string);
 }
 
@@ -425,7 +436,6 @@ function oa_single_sign_on_get_user_for_email($email)
     }
 
     // Error
-
     return null;
 }
 
@@ -437,10 +447,10 @@ function oa_single_sign_on_create_random_email($domain = 'example.com')
     do
     {
         $email = md5(uniqid(wp_rand(10000, 99000))) . '@' . $domain;
-    } while (email_exists($email));
+    }
+    while ( email_exists($email) );
 
     // Done
-
     return $email;
 }
 
@@ -471,7 +481,6 @@ function oa_single_sign_on_get_user_for_user_token($token)
     }
 
     // Error
-
     return null;
 }
 
@@ -492,6 +501,5 @@ function oa_single_sign_on_get_token_by_userid($userid)
     }
 
     $sql = "SELECT um.meta_value FROM " . $wpdb->usermeta . " AS um	INNER JOIN " . $wpdb->users . " AS u ON (um.user_id=u.ID)	WHERE um.meta_key = 'oa_single_sign_on_user_token' AND u.ID=%d";
-
     return $wpdb->get_var($wpdb->prepare($sql, $userid));
 }
