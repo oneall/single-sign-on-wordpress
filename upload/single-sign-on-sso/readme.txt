@@ -3,7 +3,7 @@ Contributors: OneAll.com, ClaudeSchlesser
 Tags: single sign on, sso, access control, single login, single password, automatic login, automatic authentication, login, authentication, magento, opencart
 Requires at least: 3.0
 Tested up to: 5.2
-Stable tag: 2.0.2
+Stable tag: 2.0.3
 
 Single Sign-On is a professional SSO extension that works accross different domains, servers and websites. Installed in just a few minutes.
 
@@ -67,6 +67,9 @@ Our team answers your questions at:<br />
 http://support.oneall.com/forums/
 
 == Changelog ==
+
+= 2.0.3 = 
+* Fix test
 
 = 2.0.2 = 
 * new SSO system for updating token

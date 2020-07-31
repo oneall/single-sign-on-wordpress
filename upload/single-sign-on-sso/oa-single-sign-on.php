@@ -3,7 +3,7 @@
 Plugin Name: Single Sign-On SSO
 Plugin URI: http://www.oneall.com/
 Description: Automatically <strong>creates accounts and signs users in</strong> as they browse between independent blogs. Fully compatible with our SSO plugins for other platform like per example Magento or OpenCart.
-Version: 2.0.2
+Version: 2.0.3
 Author: OneAll - Single Sign On <support@oneall.com>
 Author URI: http://www.oneall.com/services/customer-identity-management/single-sign-on/
 License: GPL2
@@ -11,7 +11,7 @@ License: GPL2
 
 define('OA_SINGLE_SIGN_ON_PLUGIN_URL', plugins_url() . '/' . basename(dirname(__FILE__)));
 define('OA_SINGLE_SIGN_ON_BASE_PATH', dirname(plugin_basename(__FILE__)));
-define('OA_SINGLE_SIGN_ON_VERSION', '2.0.2');
+define('OA_SINGLE_SIGN_ON_VERSION', '2.0.3');
 
 // Disable Re-Login until.
 define('OA_SINGLE_SIGN_ON_LOGIN_WAIT_COOKIE_KEY', 'oa_sso_lw');
