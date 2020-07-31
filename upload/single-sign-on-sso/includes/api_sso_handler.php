@@ -646,7 +646,7 @@ function oa_single_sign_on_check_for_sso_login()
                     // /////////////////////////////////////////////////////////////////////////
 
                     // We cannot create new accounts
-                    if ($ext_settings['accounts_autocreate'] === false)
+                    if ($ext_settings['accounts_autocreate'] === 'disabled')
                     {
                         // Add log.
                         oa_single_sign_on_add_log('[SSO Callback] New user, but account creation disabled. Cannot create user for user_token [' . $user_token . ']');
