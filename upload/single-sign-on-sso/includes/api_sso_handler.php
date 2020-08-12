@@ -152,7 +152,7 @@ function oa_single_sign_on_update_user_in_cloud($user, $password = null)
 /**
  * Lookup a user's credentials in the cloud storage.
  */
-function oa_single_sign_on_lookup_user_auth_cloud($field, $value, $password)
+function oa_single_sign_on_lookup_user_auth_cloud($field, $value, $password, $skip_user_check = false)
 {
     // Result container.
     $status = new stdClass();
@@ -166,16 +166,16 @@ function oa_single_sign_on_lookup_user_auth_cloud($field, $value, $password)
     {
         // Load user.
         $user = get_user_by($field, $value);
-        if (is_object($user) && $user instanceof WP_User && !empty($user->ID))
+        if (is_object($user) && $user instanceof WP_User && !empty($user->ID) || $skip_user_check)
         {
             // Add log.
-            oa_single_sign_on_add_log('[USER-LOOKUP-API] [UID' . $user->ID . '] Trying login with [' . $field . ':{' . $value . '}]');
+            oa_single_sign_on_add_log('[USER-LOOKUP-API] [UID' . (!$skip_user_check ? $user->ID : 'Non existing') . '] Trying login with [' . $field . ':{' . $value . '}]');
 
             // We have the user, check if he has tokens
             $tokens = oa_single_sign_on_get_local_storage_tokens_for_user($user);
 
             // Yes, we have a token.
-            if ($tokens->have_been_retrieved)
+            if ($tokens->have_been_retrieved || $skip_user_check)
             {
                 // API endpoint: http://docs.oneall.com/api/resources/storage/users/lookup-user/
                 $api_resource_url = $ext_settings['api_url'] . '/storage/users/user/lookup.json';
@@ -184,15 +184,32 @@ function oa_single_sign_on_lookup_user_auth_cloud($field, $value, $password)
                 $api_options = array(
                     'api_key' => $ext_settings['api_key'],
                     'api_secret' => $ext_settings['api_secret'],
-                    'api_data' => @json_encode(array(
+                    'api_data' => null
+                );
+
+                // Check for credential without token
+                if ($skip_user_check)
+                {
+                    $api_options['api_data'] = @json_encode(array(
+                        'request' => array(
+                            'user' => array(
+                                'login' => $value,
+                                'password' => $password
+                            )
+                        )
+                    ));
+                }
+                else
+                {
+                    $api_options['api_data'] = @json_encode(array(
                         'request' => array(
                             'user' => array(
                                 'user_token' => $tokens->user_token,
                                 'password' => oa_single_sign_on_hash_string($password)
                             )
                         )
-                    ))
-                );
+                    ));
+                }
 
                 // Read connection details.
                 $result = oa_single_sign_on_do_api_request($ext_settings['api_connection_handler'], $api_resource_url, 'POST', $api_options);
@@ -212,14 +229,29 @@ function oa_single_sign_on_lookup_user_auth_cloud($field, $value, $password)
                     // Correct password entered.
                     elseif ($result->http_code == 200)
                     {
-                        // Add Log.
-                        oa_single_sign_on_add_log('[USER-LOOKUP-API] [UID' . $user->ID . '] Login succeeded, user_token [' . $tokens->user_token . '] assigned');
+                        if ($skip_user_check)
+                        {
+                            oa_single_sign_on_add_log('[USER-LOOKUP-API] [UID] Login succeeded but no local user');
 
-                        // Update status
-                        $status->is_successfull = true;
-                        $status->user = $user;
+                            // Check data.
+                            if (is_object($decoded_result) && isset($decoded_result->response->result->data->user))
+                            {
+                                // create user
+                                $status = oa_single_sign_on_create_user_from_identity($decoded_result->response->result->data->user);
+                            }
+                        }
+                        else
+                        {
+                            // Add Log.
+                            oa_single_sign_on_add_log('[USER-LOOKUP-API] [UID' . $user->ID . '] Login succeeded, user_token [' . $tokens->user_token . '] assigned');
+
+                            // Update status
+                            $status->is_successfull = true;
+                            $status->user = $user;
+                        }
 
                         // Done.
+
                         return $status;
                     }
                 }
@@ -237,65 +269,69 @@ function oa_single_sign_on_lookup_user_auth_cloud($field, $value, $password)
     }
 
     // Not found
+
     return $status;
 }
 
 /**
  * Lookup a user's login and password in the cloud storage.
  */
-function oa_single_sign_on_lookup_user($login, $password)
+function oa_single_sign_on_lookup_user($login, $password, $skip_user_check = false)
 {
     // Result container.
     $status = new stdClass();
     $status->is_successfull = false;
 
     // Both arguments are required.
-    if ( ! empty ($login) && ! empty ($password))
-    {        
+    if (!empty($login) && !empty($password))
+    {
         // Login using an email address.
         if (filter_var($login, FILTER_VALIDATE_EMAIL))
         {
             // Lookup using an email address.
-            $result = oa_single_sign_on_lookup_user_auth_cloud('email', $login, $password);
-    
+            $result = oa_single_sign_on_lookup_user_auth_cloud('email', $login, $password, $skip_user_check);
+
             // Found user for the email/password.
             if ($result->is_successfull === true)
             {
                 // Add Log.
                 oa_single_sign_on_add_log('[USER-LOOKUP] [UID' . $result->user->ID . '] User found for email [{' . $login . '}]');
-    
+
                 // Update status.
                 $status->is_successfull = true;
                 $status->user = $result->user;
                 $status->field = 'email';
                 $status->value = $login;
-    
+
                 // Done.
+
                 return $status;
             }
         }
 
-       // Lookup using a login.
-        $result = oa_single_sign_on_lookup_user_auth_cloud('login', $login, $password);
-    
+        // Lookup using a login.
+        $result = oa_single_sign_on_lookup_user_auth_cloud('login', $login, $password, $skip_user_check);
+
         // Found user for the email/password.
         if ($result->is_successfull === true)
         {
             // Add log.
             oa_single_sign_on_add_log('[USER-LOOKUP] [UID' . $result->user->ID . '] User found for login [{' . $login . '}]');
-    
+
             // Update status.
             $status->is_successfull = true;
             $status->user = $result->user;
             $status->field = 'email';
             $status->value = $login;
-    
+
             // Done.
+
             return $status;
         }
     }
 
     // Error.
+
     return $status;
 }
 
@@ -330,6 +366,7 @@ function oa_single_sign_on_end_session_for_user($user)
     }
 
     // Done.
+
     return $status;
 }
 
@@ -423,6 +460,7 @@ function oa_single_sign_on_start_session_for_user($user, $retry_if_invalid = tru
     }
 
     // Session created.
+
     return $status;
 }
 
@@ -507,344 +545,16 @@ function oa_single_sign_on_check_for_sso_login()
                         $status->user = $user;
 
                         // Done.
+
                         return $status;
                     }
 
                     // Add Log.
                     oa_single_sign_on_add_log('[CALLBACK] No user found for user_token [' . $user_token . ']. Trying email lookup.');
 
-                    // Retrieve email from identity.
-                    if (isset($data->user->identity->emails) && is_array($data->user->identity->emails) && count($data->user->identity->emails) > 0)
-                    {
-                        // Email details.
-                        $email = $data->user->identity->emails[0]->value;
-                        $email_is_verified = ($data->user->identity->emails[0]->is_verified ? true : false);
-                        $email_is_random = false;
+                    // Create User from data
 
-                        // Check if we have a user for this email.
-                        $user = oa_single_sign_on_get_user_for_email($email);
-
-                        // User found.
-                        if (is_object($user) && $user instanceof WP_User && !empty($user->ID))
-                        {
-                            // Update Status
-                            $status->user = $user;
-
-                            // Add log.
-                            oa_single_sign_on_add_log('[CALLBACK] [UID' . $user->ID . '] User found for email [{' . $email . ']}');
-
-                            // Automatic link is disabled.
-                            if ($ext_settings['accounts_autolink'] == 'nobody')
-                            {
-                                // Add log.
-                                oa_single_sign_on_add_log('[CALLBACK] [UID' . $user->ID . '] Autolink is disabled for everybody.');
-
-                                // Update status.
-                                $status->action = 'existing_user_no_login_autolink_off';
-
-                                // Done.
-                                return $status;
-                            }
-                            // Automatic link is enabled.
-                            else
-                            {
-                                // Automatic link is disabled for admins.
-                                if ($ext_settings['accounts_autolink'] == 'everybody_except_admin' && user_can($user->ID, 'manage_options'))
-                                {
-                                    // Add log.
-                                    oa_single_sign_on_add_log('[CALLBACK] [UID' . $user->ID . '] User is admin and Autolink is disabled for admins.');
-
-                                    // Update status.
-                                    $status->action = 'existing_user_no_login_autolink_not_allowed';
-
-                                    // Done.
-                                    return $status;
-                                }
-
-                                // The email has been verified.
-                                if ($email_is_verified)
-                                {
-                                    // Add log.
-                                    oa_single_sign_on_add_log('[CALLBACK] [UID' . $user->ID . '] Autolink enabled/Email verified. Linking user_token [' . $user_token . '] to user');
-
-                                    // Add to database.
-                                    $add_tokens = oa_single_sign_on_add_local_storage_tokens_for_user($user, $user_token, $identity_token);
-
-                                    // Update Status.
-                                    $status->action = 'existing_user_login_email_verified';
-
-                                    // Done.
-                                    return $status;
-                                }
-                                // The email has NOT been verified.
-                                else
-                                {
-                                    // We can use unverified emails.
-                                    if ($ext_settings['accounts_linkunverified'] == 'enabled')
-                                    {
-                                        // Add log.
-                                        oa_single_sign_on_add_log('[CALLBACK] [UID' . $user->ID . '] Autolink enabled/Email unverified. Linking user_token [' . $user_token . '] to user');
-
-                                        // Add to database.
-                                        $add_tokens = oa_single_sign_on_add_local_storage_tokens_for_user($user, $user_token, $identity_token);
-
-                                        // Update Status.
-                                        $status->action = 'existing_user_login_email_unverified';
-
-                                        // Done.
-                                        return $status;
-                                    }
-                                    // We cannot use unverified emails.
-                                    else
-                                    {
-                                        // Add log.
-                                        oa_single_sign_on_add_log('[CALLBACK] [UID' . $user->ID . '] Autolink enabled/Unverified email not allowed. May not link user_token [' . $user_token . '] to user');
-
-                                        // Update status.
-                                        $status->action = 'existing_user_no_login_autolink_off_unverified_emails';
-
-                                        // Done.
-                                        return $status;
-                                    }
-                                }
-                            }
-                        }
-                        // No user found.
-                        else
-                        {
-                            // Add Log
-                            oa_single_sign_on_add_log('[CALLBACK] No user found for email [{' . $email . '}]');
-                        }
-                    }
-                    else
-                    {
-                        // Create random email.
-                        $email = oa_single_sign_on_create_random_email();
-                        $email_is_verified = false;
-                        $email_is_random = true;
-
-                        // Add log.
-                        oa_single_sign_on_add_log('[CALLBACK] Identity provides no email address. Random address [' . $email . '] generated.');
-                    }
-
-                    // /////////////////////////////////////////////////////////////////////////
-                    // This is a new user
-                    // /////////////////////////////////////////////////////////////////////////
-
-                    // We cannot create new accounts
-                    if ($ext_settings['accounts_autocreate'] == 'disabled')
-                    {
-                        // Add log.
-                        oa_single_sign_on_add_log('[SSO Callback] New user, but account creation disabled. Cannot create user for user_token [' . $user_token . ']');
-
-                        // Update status.
-                        $status->action = 'new_user_no_login_autocreate_off';
-
-                        // Done.
-                        return $status;
-                    }
-
-                    // Add log.
-                    oa_single_sign_on_add_log('[SSO Callback] New user, account creation enabled. Creating user for user_token [' . $user_token . ']');
-
-                    // Generate a password for the user.
-                    $password = wp_generate_password();
-                    $password = apply_filters('oa_single_sign_on_filter_new_user_password', $password, $data->user->identity);
-
-                    // First name.
-                    $first_name = '';
-                    if (!empty($data->user->identity->name->givenName))
-                    {
-                        $first_name = $data->user->identity->name->givenName;
-                    }
-                    else if (!empty($data->user->identity->displayName))
-                    {
-                        $names = explode(' ', $data->user->identity->displayName);
-                        $first_name = $names[0];
-                    }
-                    else if (!empty($data->user->identity->name->formatted))
-                    {
-                        $names = explode(' ', $data->user->identity->name->formatted);
-                        $first_name = $names[0];
-                    }
-                    $first_name = apply_filters('oa_single_sign_on_filter_new_user_firstname', $first_name, $data->user->identity);
-
-                    // Last name.
-                    $last_name = '';
-                    if (!empty($data->user->identity->name->familyName))
-                    {
-                        $last_name = $data->user->identity->name->familyName;
-                    }
-                    else if (!empty($data->user->identity->displayName))
-                    {
-                        $names = explode(' ', $data->user->identity->displayName);
-                        if (!empty($names[1]))
-                        {
-                            $last_name = $names[1];
-                        }
-                    }
-                    else if (!empty($data->user->identity->name->formatted))
-                    {
-                        $names = explode(' ', $data->user->identity->name->formatted);
-                        if (!empty($names[1]))
-                        {
-                            $last_name = $names[1];
-                        }
-                    }
-                    $last_name = apply_filters('oa_single_sign_on_filter_new_user_lastname', $last_name, $data->user->identity);
-
-                    // Login.
-                    if (!empty($data->user->identity->preferredUsername))
-                    {
-                        $login = $data->user->identity->preferredUsername;
-                    }
-                    else
-                    {
-                        if (!empty($first_name))
-                        {
-                            if (!empty($last_name))
-                            {
-                                $login = strtolower($first_name . '.' . $last_name);
-                            }
-                            else
-                            {
-                                $login = strtolower($first_name);
-                            }
-                        }
-                        else
-                        {
-                            $login = $email;
-                        }
-                    }
-                    $login = apply_filters('oa_single_sign_on_filter_new_user_login', $login, $data->user->identity);
-
-                    // Display name.
-                    if (!empty($data->user->identity->displayName))
-                    {
-                        $display_name = $data->user->identity->displayName;
-                    }
-                    else
-                    {
-                        if (!empty($first_name))
-                        {
-                            if (!empty($last_name))
-                            {
-                                $display_name = ucwords(strtolower(trim($first_name . ' ' . $last_name)));
-                            }
-                            else
-                            {
-                                $display_name = ucwords(strtolower(trim($first_name)));
-                            }
-                        }
-                        else
-                        {
-                            $display_name = $login;
-                        }
-                    }
-                    $display_name = apply_filters('oa_single_sign_on_filter_new_user_display_name', $display_name, $data->user->identity);
-
-                    // Website.
-                    $website = '';
-                    if (isset($data->user->identity->urls) && is_array($data->user->identity->urls))
-                    {
-                        $parts = array_shift($data->user->identity->urls);
-                        if (!empty($parts->value))
-                        {
-                            $website = $parts->value;
-                        }
-                    }
-                    $website = apply_filters('oa_single_sign_on_filter_new_user_website', $website, $data->user->identity);
-
-                    // Role.
-                    $role = '';
-                    if (isset($data->user->identity->roles) && is_array($data->user->identity->roles))
-                    {
-                        // Loop through roles.
-                        while ($role == '' && (list(, $part) = each($data->user->identity->roles)))
-                        {
-                            // Do we have a value?
-                            if (!empty($part->value))
-                            {
-                                // Check if it's a valid role.
-                                if ($wp_roles instanceof WP_Roles && $wp_roles->is_role($part->value))
-                                {
-                                    $role = $part->value;
-                                }
-                            }
-                        }
-                    }
-
-                    // Use default role.
-                    if (empty($role))
-                    {
-                        $role = get_option('default_role');
-                    }
-                    $role = apply_filters('oa_single_sign_on_filter_new_user_role', $role, $data->user->identity);
-
-                    // Build user data.
-                    $fields = array(
-                        'user_login' => $login,
-                        'display_name' => $display_name,
-                        'user_email' => $email,
-                        'first_name' => $first_name,
-                        'last_name' => $last_name,
-                        'user_url' => $website,
-                        'user_pass' => $password,
-                        'role' => $role
-                    );
-
-                    // Filter for user_data.
-                    $fields = apply_filters('oa_single_sign_on_filter_new_user_fields', $fields, $data->user->identity);
-
-                    // Hook before adding the user.
-                    do_action('oa_single_sign_on_action_before_user_insert', $fields, $data->user->identity);
-
-                    // Create a new user.
-                    $userid = wp_insert_user($fields);
-                    if (is_numeric($userid) && ($user = get_userdata($userid)) !== false)
-                    {
-                        // Add log.
-                        oa_single_sign_on_add_log('[SSO Callback]  [UID' . $user->ID . '] User created for user_token [' . $user_token . ']');
-
-                        // Send registration email?
-                        if ($ext_settings['accounts_sendmail'])
-                        {
-                            // We cannot send emails to random email addresses.
-                            if (!$email_is_random)
-                            {
-                                // Can emails be sent?
-                                if (function_exists('wp_new_user_notification'))
-                                {
-                                    // Send mail
-                                    wp_new_user_notification($user->ID);
-
-                                    // Add log.
-                                    oa_single_sign_on_add_log('[SSO Callback] [UID' . $user->ID . '] New user created. Sent email using wp_new_user_notification');
-                                }
-                                else
-                                {
-                                    // Add log.
-                                    oa_single_sign_on_add_log('[SSO Callback] [UID' . $user->ID . '] New user created. No email sent. wp_new_user_notification not found.');
-                                }
-                            }
-                        }
-
-                        // Add to database.
-                        $add_tokens = oa_single_sign_on_add_local_storage_tokens_for_user($user, $user_token, $identity_token);
-
-                        // Login user.
-                        oa_single_sign_login_user($user);
-
-                        // Update status.
-                        $status->action = 'new_user_created_login';
-                        $status->user_token = $user_token;
-                        $status->identity_token = $identity_token;
-                        $status->user = $user;
-                    }
-                    else
-                    {
-                        $status->action = 'user_creation_failed';
-                    }
+                    return oa_single_sign_on_create_user_from_identity($data->user);
                 }
                 else
                 {
@@ -866,8 +576,8 @@ function oa_single_sign_on_check_for_sso_login()
         $status->action = 'no_callback_data_received';
     }
 
+    // Done.
 
-	// Done.
     return $status;
 }
 
@@ -933,14 +643,15 @@ function oa_single_sign_on_add_user_to_cloud_storage($user, $password = null)
                 oa_single_sign_on_add_log('[USER-LOOKUP-API] Email [{' . $user->user_email . '}] found in cloud storage, user_token [' . $status->user_token . '] identity_token [' . $status->identity_token . '] assigned');
 
                 // Done.
+
                 return $status;
             }
         }
         else
         {
-            oa_single_sign_on_add_log('[USER-LOOKUP-API] Email [{' . $user->user_email . '}] not found in cloud storage, status ['.$result->http_code.']');
+            oa_single_sign_on_add_log('[USER-LOOKUP-API] Email [{' . $user->user_email . '}] not found in cloud storage, status [' . $result->http_code . ']');
         }
-   
+
         // ////////////////////////////////////////////////////////////////////////////////////////////////
         // If we are getting here, then a new identity needs to be added
         // ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1035,7 +746,7 @@ function oa_single_sign_on_add_user_to_cloud_storage($user, $password = null)
                 'request' => array(
                     'user' => array(
                         'login' => $user->user_email,
-                        'password' => ( ! empty ($password) ? $password : $user->user_pass),
+                        'password' => (!empty($password) ? $password : $user->user_pass),
                         'identity' => $identity
                     )
                 )
@@ -1138,6 +849,7 @@ function oa_single_sign_on_get_local_sso_session_token_for_user($user)
     }
 
     // Done.
+
     return $status;
 }
 
@@ -1165,7 +877,7 @@ function oa_single_sign_on_add_local_sso_session_token_for_user($user, $sso_sess
         {
             delete_user_meta($user->ID, 'oa_single_sign_on_sso_session_token_expiration');
         }
-        
+
         // Add Log.
         oa_single_sign_on_add_log('[SESSION-ADD-DB] [UID' . $user->ID . '] Meta [oa_single_sign_on_sso_session_token] added');
 
@@ -1176,6 +888,7 @@ function oa_single_sign_on_add_local_sso_session_token_for_user($user, $sso_sess
     }
 
     // Done.
+
     return $status;
 }
 
@@ -1227,8 +940,8 @@ function oa_single_sign_on_remove_local_storage_tokens_for_user($user)
         delete_user_meta($user->ID, 'oa_single_sign_on_identity_token');
 
         // Add log.
-        oa_single_sign_on_add_log ('[USER-UPDATE-DB] [UID' . $user->ID . '] Meta [oa_single_sign_on_user_token/oa_single_sign_on_identity_token] removed');
-        
+        oa_single_sign_on_add_log('[USER-UPDATE-DB] [UID' . $user->ID . '] Meta [oa_single_sign_on_user_token/oa_single_sign_on_identity_token] removed');
+
         // Update Status.
         $status->is_successfull = true;
     }
@@ -1249,14 +962,14 @@ function oa_single_sign_on_add_local_storage_tokens_for_user($user, $user_token,
 
     // Verify user object.
     if (is_object($user) && $user instanceof WP_User && !empty($user->ID))
-    {        
+    {
         // Set Meta.
         update_user_meta($user->ID, 'oa_single_sign_on_user_token', $user_token);
         update_user_meta($user->ID, 'oa_single_sign_on_identity_token', $identity_token);
 
         // Add log.
-        oa_single_sign_on_add_log ('[USER-UPDATE-DB] [UID' . $user->ID . '] Meta [oa_single_sign_on_user_token/oa_single_sign_on_identity_token] added');
-        
+        oa_single_sign_on_add_log('[USER-UPDATE-DB] [UID' . $user->ID . '] Meta [oa_single_sign_on_user_token/oa_single_sign_on_identity_token] added');
+
         // Update Status.
         $status->user_token = $user_token;
         $status->identity_token = $identity_token;
@@ -1480,5 +1193,368 @@ function oa_single_sign_on_remove_session_for_identity_token($identity_token)
     }
 
     // Done.
+
+    return $status;
+}
+
+function oa_single_sign_on_create_user_from_identity($user_data)
+{
+    // Result container.
+    $status = new stdClass();
+    $status->action = null;
+    $status->is_successfull = false;
+    $status->identity_token = null;
+    $status->user_token = null;
+
+    // The user_token uniquely identifies the user.
+    $user_token = $user_data->user_token;
+
+    // The identity_token uniquely identifies the user's data.
+    $identity_token = $user_data->identity->identity_token;
+
+    // Retrieve email from identity.
+    if (isset($user_data->identity->emails) && is_array($user_data->identity->emails) && count($user_data->identity->emails) > 0)
+    {
+        // Email details.
+        $email = $user_data->identity->emails[0]->value;
+        $email_is_verified = ($user_data->identity->emails[0]->is_verified ? true : false);
+        $email_is_random = false;
+
+        // Check if we have a user for this email.
+        $user = oa_single_sign_on_get_user_for_email($email);
+
+        // User found.
+        if (is_object($user) && $user instanceof WP_User && !empty($user->ID))
+        {
+            // Update Status
+            $status->user = $user;
+
+            // Add log.
+            oa_single_sign_on_add_log('[CALLBACK] [UID' . $user->ID . '] User found for email [{' . $email . ']}');
+
+            // Automatic link is disabled.
+            if ($ext_settings['accounts_autolink'] == 'nobody')
+            {
+                // Add log.
+                oa_single_sign_on_add_log('[CALLBACK] [UID' . $user->ID . '] Autolink is disabled for everybody.');
+
+                // Update status.
+                $status->action = 'existing_user_no_login_autolink_off';
+
+                // Done.
+
+                return $status;
+            }
+            // Automatic link is enabled.
+            else
+            {
+                // Automatic link is disabled for admins.
+                if ($ext_settings['accounts_autolink'] == 'everybody_except_admin' && user_can($user->ID, 'manage_options'))
+                {
+                    // Add log.
+                    oa_single_sign_on_add_log('[CALLBACK] [UID' . $user->ID . '] User is admin and Autolink is disabled for admins.');
+
+                    // Update status.
+                    $status->action = 'existing_user_no_login_autolink_not_allowed';
+
+                    // Done.
+
+                    return $status;
+                }
+
+                // The email has been verified.
+                if ($email_is_verified)
+                {
+                    // Add log.
+                    oa_single_sign_on_add_log('[CALLBACK] [UID' . $user->ID . '] Autolink enabled/Email verified. Linking user_token [' . $user_token . '] to user');
+
+                    // Add to database.
+                    $add_tokens = oa_single_sign_on_add_local_storage_tokens_for_user($user, $user_token, $identity_token);
+
+                    // Update Status.
+                    $status->action = 'existing_user_login_email_verified';
+
+                    // Done.
+
+                    return $status;
+                }
+                // The email has NOT been verified.
+                else
+                {
+                    // We can use unverified emails.
+                    if ($ext_settings['accounts_linkunverified'] == 'enabled')
+                    {
+                        // Add log.
+                        oa_single_sign_on_add_log('[CALLBACK] [UID' . $user->ID . '] Autolink enabled/Email unverified. Linking user_token [' . $user_token . '] to user');
+
+                        // Add to database.
+                        $add_tokens = oa_single_sign_on_add_local_storage_tokens_for_user($user, $user_token, $identity_token);
+
+                        // Update Status.
+                        $status->action = 'existing_user_login_email_unverified';
+
+                        // Done.
+
+                        return $status;
+                    }
+                    // We cannot use unverified emails.
+                    else
+                    {
+                        // Add log.
+                        oa_single_sign_on_add_log('[CALLBACK] [UID' . $user->ID . '] Autolink enabled/Unverified email not allowed. May not link user_token [' . $user_token . '] to user');
+
+                        // Update status.
+                        $status->action = 'existing_user_no_login_autolink_off_unverified_emails';
+
+                        // Done.
+
+                        return $status;
+                    }
+                }
+            }
+        }
+        // No user found.
+        else
+        {
+            // Add Log
+            oa_single_sign_on_add_log('[CALLBACK] No user found for email [{' . $email . '}]');
+        }
+    }
+    else
+    {
+        // Create random email.
+        $email = oa_single_sign_on_create_random_email();
+        $email_is_verified = false;
+        $email_is_random = true;
+
+        // Add log.
+        oa_single_sign_on_add_log('[CALLBACK] Identity provides no email address. Random address [' . $email . '] generated.');
+    }
+
+    // /////////////////////////////////////////////////////////////////////////
+    // This is a new user
+    // /////////////////////////////////////////////////////////////////////////
+
+    // We cannot create new accounts
+    if ($ext_settings['accounts_autocreate'] == 'disabled')
+    {
+        // Add log.
+        oa_single_sign_on_add_log('[SSO Callback] New user, but account creation disabled. Cannot create user for user_token [' . $user_token . ']');
+
+        // Update status.
+        $status->action = 'new_user_no_login_autocreate_off';
+
+        // Done.
+
+        return $status;
+    }
+
+    // Add log.
+    oa_single_sign_on_add_log('[SSO Callback] New user, account creation enabled. Creating user for user_token [' . $user_token . ']');
+
+    // Generate a password for the user.
+    $password = (empty($user_data->password)) ? wp_generate_password() : $user_data->password;
+    $password = apply_filters('oa_single_sign_on_filter_new_user_password', $password, $user_data->identity);
+
+    // First name.
+    $first_name = '';
+    if (!empty($user_data->identity->name->givenName))
+    {
+        $first_name = $user_data->identity->name->givenName;
+    }
+    else if (!empty($user_data->identity->displayName))
+    {
+        $names = explode(' ', $user_data->identity->displayName);
+        $first_name = $names[0];
+    }
+    else if (!empty($user_data->identity->name->formatted))
+    {
+        $names = explode(' ', $user_data->identity->name->formatted);
+        $first_name = $names[0];
+    }
+    $first_name = apply_filters('oa_single_sign_on_filter_new_user_firstname', $first_name, $user_data->identity);
+
+    // Last name.
+    $last_name = '';
+    if (!empty($user_data->identity->name->familyName))
+    {
+        $last_name = $user_data->identity->name->familyName;
+    }
+    else if (!empty($user_data->identity->displayName))
+    {
+        $names = explode(' ', $user_data->identity->displayName);
+        if (!empty($names[1]))
+        {
+            $last_name = $names[1];
+        }
+    }
+    else if (!empty($user_data->identity->name->formatted))
+    {
+        $names = explode(' ', $user_data->identity->name->formatted);
+        if (!empty($names[1]))
+        {
+            $last_name = $names[1];
+        }
+    }
+    $last_name = apply_filters('oa_single_sign_on_filter_new_user_lastname', $last_name, $user_data->identity);
+
+    // Login.
+    if (!empty($user_data->login))
+    {
+        $login = $user_data->login;
+    }
+    else if (!empty($user_data->identity->preferredUsername))
+    {
+        $login = $user_data->identity->preferredUsername;
+    }
+    else
+    {
+        if (!empty($first_name))
+        {
+            if (!empty($last_name))
+            {
+                $login = strtolower($first_name . '.' . $last_name);
+            }
+            else
+            {
+                $login = strtolower($first_name);
+            }
+        }
+        else
+        {
+            $login = $email;
+        }
+    }
+    $login = apply_filters('oa_single_sign_on_filter_new_user_login', $login, $user_data->identity);
+
+    // Display name.
+    if (!empty($user_data->identity->displayName))
+    {
+        $display_name = $user_data->identity->displayName;
+    }
+    else
+    {
+        if (!empty($first_name))
+        {
+            if (!empty($last_name))
+            {
+                $display_name = ucwords(strtolower(trim($first_name . ' ' . $last_name)));
+            }
+            else
+            {
+                $display_name = ucwords(strtolower(trim($first_name)));
+            }
+        }
+        else
+        {
+            $display_name = $login;
+        }
+    }
+    $display_name = apply_filters('oa_single_sign_on_filter_new_user_display_name', $display_name, $user_data->identity);
+
+    // Website.
+    $website = '';
+    if (isset($user_data->identity->urls) && is_array($user_data->identity->urls))
+    {
+        $parts = array_shift($user_data->identity->urls);
+        if (!empty($parts->value))
+        {
+            $website = $parts->value;
+        }
+    }
+    $website = apply_filters('oa_single_sign_on_filter_new_user_website', $website, $user_data->identity);
+
+    // Role.
+    $role = '';
+    if (isset($user_data->identity->roles) && is_array($user_data->identity->roles))
+    {
+        // Loop through roles.
+        while ($role == '' && (list(, $part) = each($user_data->identity->roles)))
+        {
+            // Do we have a value?
+            if (!empty($part->value))
+            {
+                // Check if it's a valid role.
+                if ($wp_roles instanceof WP_Roles && $wp_roles->is_role($part->value))
+                {
+                    $role = $part->value;
+                }
+            }
+        }
+    }
+
+    // Use default role.
+    if (empty($role))
+    {
+        $role = get_option('default_role');
+    }
+    $role = apply_filters('oa_single_sign_on_filter_new_user_role', $role, $user_data->identity);
+
+    // Build user data.
+    $fields = array(
+        'user_login' => $login,
+        'display_name' => $display_name,
+        'user_email' => $email,
+        'first_name' => $first_name,
+        'last_name' => $last_name,
+        'user_url' => $website,
+        'user_pass' => $password,
+        'role' => $role
+    );
+
+    // Filter for user_data.
+    $fields = apply_filters('oa_single_sign_on_filter_new_user_fields', $fields, $user_data->identity);
+
+    // Hook before adding the user.
+    do_action('oa_single_sign_on_action_before_user_insert', $fields, $user_data->identity);
+
+    // Create a new user.
+    $userid = wp_insert_user($fields);
+    if (is_numeric($userid) && ($user = get_userdata($userid)) !== false)
+    {
+        // Add log.
+        oa_single_sign_on_add_log('[SSO Callback]  [UID' . $user->ID . '] User created for user_token [' . $user_token . ']');
+
+        // Send registration email?
+        if ($ext_settings['accounts_sendmail'])
+        {
+            // We cannot send emails to random email addresses.
+            if (!$email_is_random)
+            {
+                // Can emails be sent?
+                if (function_exists('wp_new_user_notification'))
+                {
+                    // Send mail
+                    wp_new_user_notification($user->ID);
+
+                    // Add log.
+                    oa_single_sign_on_add_log('[SSO Callback] [UID' . $user->ID . '] New user created. Sent email using wp_new_user_notification');
+                }
+                else
+                {
+                    // Add log.
+                    oa_single_sign_on_add_log('[SSO Callback] [UID' . $user->ID . '] New user created. No email sent. wp_new_user_notification not found.');
+                }
+            }
+        }
+
+        // Add to database.
+        $add_tokens = oa_single_sign_on_add_local_storage_tokens_for_user($user, $user_token, $identity_token);
+
+        // Login user.
+        oa_single_sign_login_user($user);
+
+        // Update status.
+        $status->action = 'new_user_created_login';
+        $status->user_token = $user_token;
+        $status->is_successfull = true;
+        $status->identity_token = $identity_token;
+        $status->user = $user;
+    }
+    else
+    {
+        $status->action = 'user_creation_failed';
+    }
+
     return $status;
 }
