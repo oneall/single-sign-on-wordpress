@@ -194,7 +194,7 @@ function oa_single_sign_on_lookup_user_auth_cloud($field, $value, $password, $sk
                         'request' => array(
                             'user' => array(
                                 'login' => $value,
-                                'password' => $password
+                                'password' => oa_single_sign_on_hash_string($password)
                             )
                         )
                     ));
@@ -604,52 +604,21 @@ function oa_single_sign_on_add_user_to_cloud_storage($user, $password = null)
         // ////////////////////////////////////////////////////////////////////////////////////////////////
         // First make sure that we don't create duplicate users!
         // ////////////////////////////////////////////////////////////////////////////////////////////////
+        // Test on user login
+        $status = oa_single_sign_on_lookup_cloud_user($user->user_login);
 
-        // API endpoint: http://docs.oneall.com/api/resources/storage/users/lookup-user/
-        $api_resource_url = $ext_settings['api_url'] . '/storage/users/user/lookup.json';
-
-        // API options.
-        $api_options = array(
-            'api_key' => $ext_settings['api_key'],
-            'api_secret' => $ext_settings['api_secret'],
-            'api_data' => @json_encode(array(
-                'request' => array(
-                    'user' => array(
-                        'login' => $user->user_email
-                    )
-                )
-            ))
-        );
-
-        // User lookup.
-        $result = oa_single_sign_on_do_api_request($ext_settings['api_connection_handler'], $api_resource_url, 'POST', $api_options);
-
-        // Check result.
-        if (is_object($result) && property_exists($result, 'http_code') && $result->http_code == 200 && property_exists($result, 'http_data'))
+        if ($status->is_successfull == true)
         {
-            // Decode result.
-            $decoded_result = @json_decode($result->http_data);
-
-            // Check data.
-            if (is_object($decoded_result) && isset($decoded_result->response->result->data->user))
-            {
-                // Update status.
-                $status->action = 'existing_user_read';
-                $status->is_successfull = true;
-                $status->user_token = $decoded_result->response->result->data->user->user_token;
-                $status->identity_token = $decoded_result->response->result->data->user->identity->identity_token;
-
-                // Add log.
-                oa_single_sign_on_add_log('[USER-LOOKUP-API] Email [{' . $user->user_email . '}] found in cloud storage, user_token [' . $status->user_token . '] identity_token [' . $status->identity_token . '] assigned');
-
-                // Done.
-
-                return $status;
-            }
+            return $status;
         }
         else
         {
-            oa_single_sign_on_add_log('[USER-LOOKUP-API] Email [{' . $user->user_email . '}] not found in cloud storage, status [' . $result->http_code . ']');
+            // Test on email
+            $status = oa_single_sign_on_lookup_cloud_user($user->user_email);
+            if ($status->is_successfull == true)
+            {
+                return $status;
+            }
         }
 
         // ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1554,6 +1523,66 @@ function oa_single_sign_on_create_user_from_identity($user_data)
     else
     {
         $status->action = 'user_creation_failed';
+    }
+
+    return $status;
+}
+
+// Check cloud credentials
+function oa_single_sign_on_lookup_cloud_user($user_login)
+{
+    // Read settings.
+    $ext_settings = oa_single_sign_on_get_settings();
+
+    // Result Container
+    $status = new stdClass();
+    $status->is_successfull = false;
+    $status->identity_token = null;
+    $status->user_token = null;
+
+    // API endpoint: http://docs.oneall.com/api/resources/storage/users/lookup-user/
+    $api_resource_url = $ext_settings['api_url'] . '/storage/users/user/lookup.json';
+
+    // API options.
+    $api_options = array(
+        'api_key' => $ext_settings['api_key'],
+        'api_secret' => $ext_settings['api_secret'],
+        'api_data' => @json_encode(array(
+            'request' => array(
+                'user' => array(
+                    'login' => $user_login
+                )
+            )
+        ))
+    );
+
+    // User lookup.
+    $result = oa_single_sign_on_do_api_request($ext_settings['api_connection_handler'], $api_resource_url, 'POST', $api_options);
+
+    // Check result.
+    if (is_object($result) && property_exists($result, 'http_code') && $result->http_code == 200 && property_exists($result, 'http_data'))
+    {
+        // Decode result.
+        $decoded_result = @json_decode($result->http_data);
+
+        // Check data.
+        if (is_object($decoded_result) && isset($decoded_result->response->result->data->user))
+        {
+            // Update status.
+            $status->action = 'existing_user_read';
+            $status->is_successfull = true;
+            $status->user_token = $decoded_result->response->result->data->user->user_token;
+            $status->identity_token = $decoded_result->response->result->data->user->identity->identity_token;
+
+            // Add log.
+            oa_single_sign_on_add_log('[USER-LOOKUP-API] Email [{' . $user->user_email . '}] found in cloud storage, user_token [' . $status->user_token . '] identity_token [' . $status->identity_token . '] assigned');
+
+            return $status;
+        }
+    }
+    else
+    {
+        oa_single_sign_on_add_log('[USER-LOOKUP-API] Email [{' . $user->user_email . '}] not found in cloud storage, status [' . $result->http_code . ']');
     }
 
     return $status;
