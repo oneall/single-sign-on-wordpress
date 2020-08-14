@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.2.1] - 2020-08-12
+### Fixed
+* Fix lookup non hashed password + double lookup (email and login)
+
 ## [2.2.0] - 2020-08-12
 ### Added
 * Possibilty to login with no local account using User Cloud Storage
