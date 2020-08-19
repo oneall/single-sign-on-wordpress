@@ -262,6 +262,32 @@ function oa_single_sign_on_after_profile_update($userid)
 add_action('profile_update', 'oa_single_sign_on_after_profile_update', 10, 1);
 
 /**
+ * Reset Password when email registration is activated
+ */
+function oa_single_sign_on_after_password_reset($user, $new_pass)
+{
+    // Is the plugin configured?
+    if (oa_single_sign_on_is_configured())
+    {
+        // Make sure the user is authenticated.
+        if (is_object($user) && $user instanceof WP_User && !empty($user->ID))
+        {
+            // Read settings.
+            $ext_settings = oa_single_sign_on_get_settings();
+
+            // Update in cloud storage.
+            $update_user = oa_single_sign_on_update_user_in_cloud($user, $new_pass);
+
+            // Add log.
+            oa_single_sign_on_add_log('[USER-UPDATE] [UID' . $user->ID . '] Password reset-> ' . $update_user->action);
+        }
+    }
+}
+
+// add the action
+add_action('after_password_reset', 'oa_single_sign_on_after_password_reset', 10, 2);
+
+/**
  * Add user to cloud storage on register
  */
 function oa_single_sign_on_after_user_register($userid)
